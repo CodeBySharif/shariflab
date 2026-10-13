@@ -8,7 +8,9 @@ frontend/.env
 .DS_Store
 frontend/dist/
 backend/dist/
-backend/drizzle/
-
 # local tooling
 .cursor/
+
+data/uploads/*
+!data/uploads/.gitkeep
+.env

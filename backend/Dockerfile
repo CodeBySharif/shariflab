@@ -10,6 +10,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
 COPY --from=build /app/dist ./dist
+COPY drizzle ./drizzle
 ENV NODE_ENV=production
+ENV UPLOAD_DIR=/data/uploads
 EXPOSE 3001
 CMD ["node", "dist/index.js"]

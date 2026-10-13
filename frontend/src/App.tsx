@@ -7,9 +7,12 @@ import { ToastProvider } from './context/ToastContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
 import ProjectsPage from './pages/ProjectsPage'
-import ProjectAnalyticsPage from './pages/ProjectAnalyticsPage'
+import ProjectDetailPage from './pages/ProjectDetailPage'
 import ProjectFormPage from './pages/ProjectFormPage'
+import PublicHubPage from './pages/PublicHubPage'
+import PublicProjectPage from './pages/PublicProjectPage'
 import { queryClient } from './lib/queryClient'
 
 export default function App() {
@@ -22,6 +25,9 @@ export default function App() {
             <BrowserRouter>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/u/:username" element={<PublicHubPage />} />
+                <Route path="/u/:username/p/:slug" element={<PublicProjectPage />} />
                 <Route
                   element={
                     <ProtectedRoute>
@@ -30,7 +36,7 @@ export default function App() {
                   }
                 >
                   <Route path="/" element={<ProjectsPage />} />
-                  <Route path="/projects/:id" element={<ProjectAnalyticsPage />} />
+                  <Route path="/projects/:id" element={<ProjectDetailPage />} />
                   <Route path="/projects/:id/edit" element={<ProjectFormPage />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />

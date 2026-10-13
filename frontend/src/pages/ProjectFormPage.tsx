@@ -10,34 +10,47 @@ import {
   Checkbox,
   FormControlLabel,
   Grid,
-  Link,
+  IconButton,
   MenuItem,
   Stack,
   TextField,
   Typography,
 } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
 import api from '../api/client'
 import FormSkeleton from '../components/skeletons/FormSkeleton'
 import TechStackInput from '../components/TechStackInput'
 import { useToast } from '../context/ToastContext'
-import type { Project } from '../types'
+import type { Project, ProjectDiagram, ProjectStatus } from '../types'
 
 export default function ProjectFormPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { showToast } = useToast()
-  const isEdit = Boolean(id)
 
   const [name, setName] = useState('')
+  const [slug, setSlug] = useState('')
   const [websiteUrl, setWebsiteUrl] = useState('')
   const [githubUrl, setGithubUrl] = useState('')
-  const [deployPlatform, setDeployPlatform] = useState('')
+  const [demoUrl, setDemoUrl] = useState('')
   const [description, setDescription] = useState('')
+  const [problemStatement, setProblemStatement] = useState('')
+  const [solution, setSolution] = useState('')
+  const [targetUsers, setTargetUsers] = useState('')
+  const [useCases, setUseCases] = useState('')
+  const [keyFeatures, setKeyFeatures] = useState('')
+  const [lessonsLearned, setLessonsLearned] = useState('')
   const [techStack, setTechStack] = useState('')
-  const [trackingEnabled, setTrackingEnabled] = useState(false)
-  const [thumbnailMsg, setThumbnailMsg] = useState<string | null>(null)
+  const [deployLocation, setDeployLocation] = useState('')
+  const [deployPlatform, setDeployPlatform] = useState('')
+  const [status, setStatus] = useState<ProjectStatus>('wip')
+  const [timeline, setTimeline] = useState('')
+  const [role, setRole] = useState('')
+  const [isPublished, setIsPublished] = useState(false)
+  const [diagrams, setDiagrams] = useState<ProjectDiagram[]>([])
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null)
 
   const cached = queryClient.getQueryData<Project[]>(['projects'])?.find((p) => p.id === id)
 
@@ -50,159 +63,329 @@ export default function ProjectFormPage() {
   } = useQuery({
     queryKey: ['project', id],
     queryFn: async () => (await api.get<Project>(`/projects/${id}`)).data,
-    enabled: isEdit,
+    enabled: Boolean(id),
     initialData: cached,
     retry: false,
   })
 
   useEffect(() => {
-    if (project) {
-      setName(project.name)
-      setWebsiteUrl(project.websiteUrl)
-      setGithubUrl(project.githubUrl ?? '')
-      setDeployPlatform(project.deployPlatform ?? '')
-      setDescription(project.description ?? '')
-      setTechStack(project.techStack ?? '')
-      setTrackingEnabled(project.trackingEnabled)
-    }
+    if (!project) return
+    setName(project.name)
+    setSlug(project.slug)
+    setWebsiteUrl(project.websiteUrl ?? '')
+    setGithubUrl(project.githubUrl ?? '')
+    setDemoUrl(project.demoUrl ?? '')
+    setDescription(project.description ?? '')
+    setProblemStatement(project.problemStatement ?? '')
+    setSolution(project.solution ?? '')
+    setTargetUsers(project.targetUsers ?? '')
+    setUseCases(project.useCases ?? '')
+    setKeyFeatures(project.keyFeatures ?? '')
+    setLessonsLearned(project.lessonsLearned ?? '')
+    setTechStack(project.techStack ?? '')
+    setDeployLocation(project.deployLocation ?? '')
+    setDeployPlatform(project.deployPlatform ?? '')
+    setStatus(project.status)
+    setTimeline(project.timeline ?? '')
+    setRole(project.role ?? '')
+    setIsPublished(project.isPublished)
+    setDiagrams(project.diagrams ?? [])
+    setThumbnailUrl(project.thumbnailUrl)
   }, [project])
 
   const saveMutation = useMutation({
     mutationFn: async () => {
       const body = {
         name,
-        websiteUrl,
+        slug: slug || undefined,
+        websiteUrl: websiteUrl || null,
         githubUrl: githubUrl || null,
-        deployPlatform: deployPlatform || null,
+        demoUrl: demoUrl || null,
         description: description || null,
+        problemStatement: problemStatement || null,
+        solution: solution || null,
+        targetUsers: targetUsers || null,
+        useCases: useCases || null,
+        keyFeatures: keyFeatures || null,
+        lessonsLearned: lessonsLearned || null,
         techStack: techStack || null,
-        trackingEnabled,
+        deployLocation: deployLocation || null,
+        deployPlatform: deployPlatform || null,
+        status,
+        timeline: timeline || null,
+        role: role || null,
+        isPublished,
       }
-      if (isEdit) return (await api.patch<Project>(`/projects/${id}`, body)).data
-      return (await api.post<Project>('/projects', body)).data
+      return (await api.patch<Project>(`/projects/${id}`, body)).data
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['projects'] })
       queryClient.invalidateQueries({ queryKey: ['project', data.id] })
-      showToast(`${data.name} ${isEdit ? 'updated' : 'added'}`)
-      navigate('/')
+      showToast(`${data.name} updated`)
+      navigate(`/projects/${data.id}`)
     },
-    onError: () => {
-      showToast('Could not save project. Check the fields and try again.', 'error')
-    },
+    onError: () => showToast('Could not save project', 'error'),
   })
 
-  const refreshThumbnail = useMutation({
-    mutationFn: async () => {
-      const res = await api.post<{ thumbnailUrl: string }>(`/projects/${id}/thumbnail/refresh`)
-      return res.data
+  const uploadThumb = useMutation({
+    mutationFn: async (file: File) => {
+      const form = new FormData()
+      form.append('file', file)
+      return (await api.post<Project>(`/projects/${id}/thumbnail`, form)).data
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      setThumbnailUrl(data.thumbnailUrl)
       queryClient.invalidateQueries({ queryKey: ['project', id] })
       queryClient.invalidateQueries({ queryKey: ['projects'] })
-      setThumbnailMsg('Thumbnail captured.')
-      showToast('Thumbnail updated')
+      showToast('Snapshot uploaded')
     },
-    onError: () => {
-      setThumbnailMsg('Capture failed. Check that the website URL is public.')
-      showToast('Thumbnail capture failed', 'error')
-    },
+    onError: () => showToast('Could not upload snapshot', 'error'),
   })
 
-  if (isEdit && isLoading && !project) {
-    return (
-      <Box>
-        <Link
-          component={RouterLink}
-          to="/"
-          underline="hover"
-          color="text.secondary"
-          sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, mb: 1 }}
-        >
-          <ArrowBackIcon sx={{ fontSize: 16 }} /> Back
-        </Link>
-        <FormSkeleton />
-      </Box>
-    )
-  }
+  const uploadDiagram = useMutation({
+    mutationFn: async ({ file, title }: { file: File; title: string }) => {
+      const form = new FormData()
+      form.append('file', file)
+      if (title) form.append('title', title)
+      return (await api.post<ProjectDiagram>(`/projects/${id}/diagrams`, form)).data
+    },
+    onSuccess: (diagram) => {
+      setDiagrams((prev) => [...prev, diagram])
+      queryClient.invalidateQueries({ queryKey: ['project', id] })
+      showToast('Diagram added')
+    },
+    onError: () => showToast('Could not upload diagram', 'error'),
+  })
 
-  if (isEdit && (isError || (!isLoading && !project))) {
+  const deleteDiagram = useMutation({
+    mutationFn: async (diagramId: string) => {
+      await api.delete(`/projects/${id}/diagrams/${diagramId}`)
+      return diagramId
+    },
+    onSuccess: (diagramId) => {
+      setDiagrams((prev) => prev.filter((d) => d.id !== diagramId))
+      queryClient.invalidateQueries({ queryKey: ['project', id] })
+      showToast('Diagram removed')
+    },
+    onError: () => showToast('Could not remove diagram', 'error'),
+  })
+
+  if (isLoading && !project) return <FormSkeleton />
+
+  if (isError) {
     return (
-      <Box>
-        <Link
-          component={RouterLink}
-          to="/"
-          underline="hover"
-          color="text.secondary"
-          sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, mb: 2 }}
-        >
-          <ArrowBackIcon sx={{ fontSize: 16 }} /> All projects
-        </Link>
-        <Alert
-          severity="error"
-          action={
-            <Button color="inherit" size="small" onClick={() => refetch()}>
-              Retry
-            </Button>
-          }
-        >
-          Project not found{error instanceof Error && error.message ? `: ${error.message}` : '.'}
-        </Alert>
-      </Box>
+      <Alert
+        severity="error"
+        action={
+          <Button color="inherit" size="small" onClick={() => refetch()}>
+            Retry
+          </Button>
+        }
+      >
+        Could not load project{error instanceof Error ? `: ${error.message}` : '.'}
+      </Alert>
     )
   }
 
   return (
-    <Box className="fade-in">
-      <Stack spacing={0.5} sx={{ mb: 3 }}>
-        <Link
-          component={RouterLink}
-          to="/"
-          underline="hover"
-          color="text.secondary"
-          sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, alignSelf: 'flex-start', minHeight: 40 }}
-        >
-          <ArrowBackIcon sx={{ fontSize: 16 }} /> All projects
-        </Link>
-        <Typography variant="overline" color="text.secondary">
-          Settings
-        </Typography>
-        <Typography variant="h4" sx={{ letterSpacing: '-0.02em' }}>
-          {isEdit ? 'Edit project' : 'New project'}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Update catalog fields. Save when you are done.
-        </Typography>
-      </Stack>
+    <Box>
+      <Button
+        component={RouterLink}
+        to={id ? `/projects/${id}` : '/'}
+        startIcon={<ArrowBackIcon />}
+        size="small"
+        sx={{ mb: 2 }}
+      >
+        Back
+      </Button>
 
-      <Card>
-        <CardContent sx={{ p: { xs: 2.5, md: 4 }, '&:last-child': { pb: { xs: 2.5, md: 4 } } }}>
-          <Box
-            component="form"
-            onSubmit={(e) => {
-              e.preventDefault()
-              saveMutation.mutate()
-            }}
-            sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}
-          >
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex' }}>
-                <Stack spacing={2.5} sx={{ width: '100%' }}>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Identity
-                  </Typography>
+      <Typography variant="h4" sx={{ mb: 3, letterSpacing: '-0.02em', fontWeight: 600 }}>
+        Edit case study
+      </Typography>
+
+      <Box
+        component="form"
+        onSubmit={(e) => {
+          e.preventDefault()
+          saveMutation.mutate()
+        }}
+      >
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, md: 8 }}>
+            <Card sx={{ mb: 3 }}>
+              <CardContent sx={{ p: { xs: 2.5, md: 3 } }}>
+                <Stack spacing={2.5}>
+                  <TextField label="Name" value={name} onChange={(e) => setName(e.target.value)} required fullWidth />
                   <TextField
-                    label="Name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
+                    label="URL slug"
+                    value={slug}
+                    onChange={(e) => setSlug(e.target.value)}
+                    helperText="Used in public URL: /u/you/p/slug"
                     fullWidth
                   />
+                  <TextField
+                    label="Description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    multiline
+                    minRows={3}
+                    fullWidth
+                  />
+                  <TextField
+                    label="Problem statement"
+                    value={problemStatement}
+                    onChange={(e) => setProblemStatement(e.target.value)}
+                    multiline
+                    minRows={3}
+                    fullWidth
+                  />
+                  <TextField
+                    label="How it solves the problem"
+                    value={solution}
+                    onChange={(e) => setSolution(e.target.value)}
+                    multiline
+                    minRows={3}
+                    fullWidth
+                  />
+                  <TextField
+                    label="Target users"
+                    value={targetUsers}
+                    onChange={(e) => setTargetUsers(e.target.value)}
+                    multiline
+                    minRows={2}
+                    fullWidth
+                  />
+                  <TextField
+                    label="Use cases"
+                    value={useCases}
+                    onChange={(e) => setUseCases(e.target.value)}
+                    multiline
+                    minRows={2}
+                    fullWidth
+                  />
+                  <TextField
+                    label="Key features"
+                    value={keyFeatures}
+                    onChange={(e) => setKeyFeatures(e.target.value)}
+                    multiline
+                    minRows={2}
+                    fullWidth
+                  />
+                  <TextField
+                    label="Lessons learned"
+                    value={lessonsLearned}
+                    onChange={(e) => setLessonsLearned(e.target.value)}
+                    multiline
+                    minRows={2}
+                    fullWidth
+                  />
+                </Stack>
+              </CardContent>
+            </Card>
+
+            <Card sx={{ mb: 3 }}>
+              <CardContent sx={{ p: { xs: 2.5, md: 3 } }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                  Snapshot
+                </Typography>
+                {thumbnailUrl && (
+                  <Box
+                    component="img"
+                    src={thumbnailUrl}
+                    alt=""
+                    sx={{
+                      width: '100%',
+                      maxHeight: 240,
+                      objectFit: 'cover',
+                      objectPosition: 'top',
+                      borderRadius: 1,
+                      border: 1,
+                      borderColor: 'divider',
+                      mb: 2,
+                    }}
+                  />
+                )}
+                <Button variant="outlined" component="label" disabled={uploadThumb.isPending}>
+                  {uploadThumb.isPending ? 'Uploading…' : 'Upload snapshot'}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) uploadThumb.mutate(file)
+                      e.target.value = ''
+                    }}
+                  />
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent sx={{ p: { xs: 2.5, md: 3 } }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                  Diagrams
+                </Typography>
+                <Stack spacing={2} sx={{ mb: 2 }}>
+                  {diagrams.map((d) => (
+                    <Stack key={d.id} direction="row" spacing={1.5} sx={{ alignItems: 'flex-start' }}>
+                      <Box
+                        component="img"
+                        src={d.imageUrl}
+                        alt={d.title || 'Diagram'}
+                        sx={{
+                          width: 120,
+                          height: 80,
+                          objectFit: 'cover',
+                          borderRadius: 1,
+                          border: 1,
+                          borderColor: 'divider',
+                          flexShrink: 0,
+                        }}
+                      />
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography variant="body2">{d.title || 'Untitled diagram'}</Typography>
+                      </Box>
+                      <IconButton
+                        size="small"
+                        aria-label="Delete diagram"
+                        onClick={() => deleteDiagram.mutate(d.id)}
+                        disabled={deleteDiagram.isPending}
+                      >
+                        <DeleteOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </Stack>
+                  ))}
+                </Stack>
+                <Button variant="outlined" component="label" disabled={uploadDiagram.isPending}>
+                  {uploadDiagram.isPending ? 'Uploading…' : 'Add diagram'}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        const title = window.prompt('Diagram title (optional)') ?? ''
+                        uploadDiagram.mutate({ file, title })
+                      }
+                      e.target.value = ''
+                    }}
+                  />
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Card sx={{ mb: 3 }}>
+              <CardContent sx={{ p: 2.5 }}>
+                <Stack spacing={2}>
+                  <TechStackInput value={techStack} onChange={setTechStack} />
                   <TextField
                     label="Website URL"
                     value={websiteUrl}
                     onChange={(e) => setWebsiteUrl(e.target.value)}
-                    required
                     fullWidth
                   />
                   <TextField
@@ -212,166 +395,76 @@ export default function ProjectFormPage() {
                     fullWidth
                   />
                   <TextField
-                    select
+                    label="Demo URL"
+                    value={demoUrl}
+                    onChange={(e) => setDemoUrl(e.target.value)}
+                    fullWidth
+                  />
+                  <TextField
+                    label="Deploy location"
+                    value={deployLocation}
+                    onChange={(e) => setDeployLocation(e.target.value)}
+                    placeholder="e.g. VPS in Singapore"
+                    fullWidth
+                  />
+                  <TextField
                     label="Deploy platform"
                     value={deployPlatform}
                     onChange={(e) => setDeployPlatform(e.target.value)}
+                    placeholder="e.g. Docker Compose"
+                    fullWidth
+                  />
+                  <TextField
+                    select
+                    label="Status"
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value as ProjectStatus)}
                     fullWidth
                   >
-                    <MenuItem value="">Select...</MenuItem>
-                    <MenuItem value="vercel">Vercel</MenuItem>
-                    <MenuItem value="netlify">Netlify</MenuItem>
-                    <MenuItem value="gcp">GCP</MenuItem>
-                    <MenuItem value="cloudflare">Cloudflare Pages</MenuItem>
-                    <MenuItem value="other">Other</MenuItem>
+                    <MenuItem value="wip">WIP</MenuItem>
+                    <MenuItem value="live">Live</MenuItem>
+                    <MenuItem value="archived">Archived</MenuItem>
                   </TextField>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
-                      Tech stack
-                    </Typography>
-                    <TechStackInput value={techStack} onChange={setTechStack} />
-                  </Box>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={trackingEnabled}
-                        onChange={(e) => setTrackingEnabled(e.target.checked)}
-                        size="small"
-                      />
-                    }
-                    label={
-                      <Box>
-                        <Typography variant="body2">Enable visitor tracking (optional)</Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                          Optional. The hub works without it.
-                        </Typography>
-                      </Box>
-                    }
-                  />
-                </Stack>
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex' }}>
-                <Stack spacing={2.5} sx={{ width: '100%', flex: 1 }}>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Notes & preview
-                  </Typography>
                   <TextField
-                    label="Notes"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    multiline
-                    minRows={isEdit ? 8 : 12}
+                    label="Timeline"
+                    value={timeline}
+                    onChange={(e) => setTimeline(e.target.value)}
+                    placeholder="e.g. Jan–Mar 2026"
                     fullWidth
                   />
-
-                  {isEdit && (
-                    <Box
-                      sx={{
-                        p: 2,
-                        border: 1,
-                        borderColor: 'divider',
-                        borderRadius: 2,
-                        bgcolor: 'background.default',
-                      }}
-                    >
-                      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-                        {project?.thumbnailUrl ? (
-                          <Box
-                            component="img"
-                            src={project.thumbnailUrl}
-                            alt={project.name}
-                            sx={{
-                              width: 180,
-                              height: 104,
-                              objectFit: 'cover',
-                              objectPosition: 'top',
-                              borderRadius: 1,
-                              border: 1,
-                              borderColor: 'divider',
-                              flexShrink: 0,
-                            }}
-                          />
-                        ) : (
-                          <Box
-                            sx={{
-                              width: 180,
-                              height: 104,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              border: 1,
-                              borderStyle: 'dashed',
-                              borderColor: 'divider',
-                              borderRadius: 1,
-                              flexShrink: 0,
-                            }}
-                          >
-                            <Typography variant="caption" color="text.secondary">
-                              No thumb
-                            </Typography>
-                          </Box>
-                        )}
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                            Thumbnail
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                            Auto-captured from your live URL.
-                          </Typography>
-                          {thumbnailMsg && (
-                            <Typography
-                              variant="caption"
-                              color={
-                                thumbnailMsg.includes('failed') || thumbnailMsg.includes('Capture failed')
-                                  ? 'error.main'
-                                  : 'success.main'
-                              }
-                              sx={{ display: 'block' }}
-                            >
-                              {thumbnailMsg}
-                            </Typography>
-                          )}
-                        </Box>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => {
-                            setThumbnailMsg(null)
-                            refreshThumbnail.mutate()
-                          }}
-                          disabled={refreshThumbnail.isPending}
-                          sx={{ flexShrink: 0 }}
-                        >
-                          {refreshThumbnail.isPending ? 'Capturing...' : 'Refresh'}
-                        </Button>
-                      </Stack>
-                    </Box>
-                  )}
+                  <TextField
+                    label="Your role"
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                    fullWidth
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox checked={isPublished} onChange={(e) => setIsPublished(e.target.checked)} />
+                    }
+                    label="Published on public hub"
+                  />
                 </Stack>
-              </Grid>
-            </Grid>
+              </CardContent>
+            </Card>
 
-            <Stack
-              direction="row"
-              spacing={1}
-              sx={{
-                justifyContent: 'flex-end',
-                pt: 2,
-                borderTop: 1,
-                borderColor: 'divider',
-              }}
-            >
-              <Button component={RouterLink} to="/" variant="outlined">
+            <Stack direction="row" spacing={1.5}>
+              <Button
+                type="button"
+                variant="outlined"
+                fullWidth
+                onClick={() => navigate(id ? `/projects/${id}` : '/')}
+                disabled={saveMutation.isPending}
+              >
                 Cancel
               </Button>
-              <Button type="submit" variant="contained" disabled={saveMutation.isPending}>
-                {saveMutation.isPending ? 'Saving...' : 'Save changes'}
+              <Button type="submit" variant="contained" fullWidth disabled={saveMutation.isPending}>
+                {saveMutation.isPending ? 'Saving…' : 'Save'}
               </Button>
             </Stack>
-          </Box>
-        </CardContent>
-      </Card>
+          </Grid>
+        </Grid>
+      </Box>
     </Box>
   )
 }

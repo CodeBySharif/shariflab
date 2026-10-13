@@ -1,61 +1,63 @@
-export type DeployPlatform = 'vercel' | 'netlify' | 'gcp' | 'cloudflare' | 'other'
+export type ProjectStatus = 'wip' | 'live' | 'archived'
+
+export interface ProjectDiagram {
+  id: string
+  title: string | null
+  imageUrl: string
+  sortOrder: number
+}
 
 export interface Project {
   id: string
+  ownerId: string
+  slug: string
   name: string
-  websiteUrl: string
+  websiteUrl: string | null
   githubUrl: string | null
-  deployPlatform: DeployPlatform | null
   description: string | null
   techStack: string | null
   thumbnailUrl: string | null
-  thumbnailUpdatedAt: string | null
-  trackingEnabled: boolean
-  siteKey: string
+  problemStatement: string | null
+  solution: string | null
+  targetUsers: string | null
+  useCases: string | null
+  deployLocation: string | null
+  deployPlatform: string | null
+  status: ProjectStatus
+  timeline: string | null
+  role: string | null
+  keyFeatures: string | null
+  lessonsLearned: string | null
+  demoUrl: string | null
+  isPublished: boolean
   createdAt: string
   updatedAt: string
-  pageViews7d: number
+  diagrams: ProjectDiagram[]
 }
 
-export interface ProjectCreated extends Project {
-  siteSecret?: string
+export interface AuthUser {
+  id: string
+  username: string
+  email: string
+  displayName: string | null
+  bio: string | null
+  createdAt: string
 }
 
-export interface Overview {
-  pageViews: number
-  uniqueVisitors: number
-  avgDurationSec: number
-  bounceRate: number
-  pagesPerSession: number
-  newVisitors: number
-  returningVisitors: number
-  daily: { date: string; count: number }[]
+export interface PublicHub {
+  user: {
+    username: string
+    displayName: string | null
+    bio: string | null
+  }
+  projects: Project[]
 }
 
-export interface PageStats {
-  path: string
-  title: string | null
-  views: number
-  avgDwellSec: number
-  totalDwellSec: number
-}
-
-export interface Traffic {
-  hourly: { day: number; hour: number; count: number }[]
-  daily: { date: string; count: number }[]
-}
-
-export interface ReferrerStats {
-  referrer: string
-  count: number
-}
-
-export interface DeviceStats {
-  device: string
-  count: number
-}
-
-export interface Realtime {
-  activeUsers: number
-  activePages: string[]
+export interface PublicProjectDetail {
+  user: {
+    username: string
+    displayName: string | null
+    bio: string | null
+  }
+  project: Project
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Link as RouterLink, Navigate, useNavigate } from 'react-router-dom'
 import {
   Alert,
   Box,
@@ -7,14 +7,18 @@ import {
   Card,
   CardContent,
   CircularProgress,
+  Link,
   Stack,
+  TextField,
   Typography,
 } from '@mui/material'
-import GoogleIcon from '@mui/icons-material/Google'
 import { useAuth } from '../context/AuthContext'
 
 export default function LoginPage() {
-  const { user, loading, signInWithGoogle } = useAuth()
+  const { user, loading, login } = useAuth()
+  const navigate = useNavigate()
+  const [loginValue, setLoginValue] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -34,78 +38,67 @@ export default function LoginPage() {
     >
       <Card sx={{ width: '100%', maxWidth: 420 }}>
         <CardContent sx={{ p: { xs: 3, sm: 4 }, '&:last-child': { pb: { xs: 3, sm: 4 } } }}>
-          <Stack spacing={1.5} sx={{ alignItems: 'flex-start' }}>
-            <Box
-              component="img"
-              src="/logo.svg"
-              alt=""
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: '8px',
-                boxShadow: (t) =>
-                  t.palette.mode === 'dark'
-                    ? 'inset 0 1px 0 rgba(255,255,255,0.14)'
-                    : 'inset 0 1px 0 rgba(255,255,255,0.9)',
-              }}
-            />
-            <Box>
-              <Typography variant="h4" component="h1" sx={{ letterSpacing: '-0.02em' }}>
-                Sharif Lab
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
-                Sign in to open your project hub.
-              </Typography>
-            </Box>
+          <Stack spacing={1}>
+            <Typography variant="h4" component="h1" sx={{ letterSpacing: '-0.02em' }}>
+              Sharif Lab
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Sign in to manage your project hub.
+            </Typography>
           </Stack>
 
           {loading ? (
-            <Box
-              sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}
-              role="status"
-              aria-live="polite"
-            >
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
               <CircularProgress size={28} />
-              <Box
-                component="span"
-                sx={{
-                  position: 'absolute',
-                  width: 1,
-                  height: 1,
-                  overflow: 'hidden',
-                  clip: 'rect(0 0 0 0)',
-                }}
-              >
-                Checking session
-              </Box>
             </Box>
           ) : (
-            <Stack spacing={2} sx={{ mt: 4 }}>
-              {error && <Alert severity="error">{error}</Alert>}
-              <Button
-                fullWidth
-                variant="contained"
-                size="large"
-                startIcon={<GoogleIcon />}
-                disabled={submitting}
-                onClick={async () => {
-                  setError('')
-                  setSubmitting(true)
-                  try {
-                    await signInWithGoogle()
-                  } catch (e) {
-                    setError(e instanceof Error ? e.message : 'Sign in failed')
-                  } finally {
-                    setSubmitting(false)
-                  }
-                }}
-              >
-                {submitting ? 'Opening Google…' : 'Continue with Google'}
-              </Button>
-              <Typography variant="caption" color="text.secondary">
-                Private catalog for your deployed sites. One account, your shelf only.
-              </Typography>
-            </Stack>
+            <Box
+              component="form"
+              sx={{ mt: 3 }}
+              onSubmit={async (e) => {
+                e.preventDefault()
+                setError('')
+                setSubmitting(true)
+                try {
+                  await login(loginValue, password)
+                  navigate('/')
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : 'Sign in failed')
+                } finally {
+                  setSubmitting(false)
+                }
+              }}
+            >
+              <Stack spacing={2}>
+                {error && <Alert severity="error">{error}</Alert>}
+                <TextField
+                  label="Email or username"
+                  value={loginValue}
+                  onChange={(e) => setLoginValue(e.target.value)}
+                  required
+                  fullWidth
+                  autoComplete="username"
+                />
+                <TextField
+                  label="Password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  fullWidth
+                  autoComplete="current-password"
+                />
+                <Button type="submit" variant="contained" size="large" disabled={submitting} fullWidth>
+                  {submitting ? 'Signing in…' : 'Sign in'}
+                </Button>
+                <Typography variant="body2" color="text.secondary">
+                  No account yet?{' '}
+                  <Link component={RouterLink} to="/register">
+                    Create one
+                  </Link>
+                </Typography>
+              </Stack>
+            </Box>
           )}
         </CardContent>
       </Card>

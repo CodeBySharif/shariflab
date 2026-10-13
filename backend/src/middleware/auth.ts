@@ -1,22 +1,25 @@
-import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js'
 import type { Request, Response, NextFunction } from 'express'
-
-let supabaseAdmin: SupabaseClient | null = null
-
-export function getSupabaseAdmin(): SupabaseClient {
-  if (!supabaseAdmin) {
-    const url = process.env.SUPABASE_URL
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-    if (!url || !key) throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY required')
-    supabaseAdmin = createClient(url, key, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    })
-  }
-  return supabaseAdmin
-}
+import jwt from 'jsonwebtoken'
+import { eq } from 'drizzle-orm'
+import { db } from '../db/index.js'
+import { users, type User } from '../db/schema.js'
 
 export interface AuthRequest extends Request {
   user?: User
+}
+
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET
+  if (!secret) throw new Error('JWT_SECRET is required')
+  return secret
+}
+
+export function signToken(user: User): string {
+  return jwt.sign(
+    { sub: user.id, username: user.username, email: user.email },
+    getJwtSecret(),
+    { expiresIn: '30d' },
+  )
 }
 
 export async function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
@@ -26,13 +29,27 @@ export async function requireAuth(req: AuthRequest, res: Response, next: NextFun
     return
   }
 
-  const token = header.slice(7)
-  const { data, error } = await getSupabaseAdmin().auth.getUser(token)
-  if (error || !data.user) {
+  try {
+    const payload = jwt.verify(header.slice(7), getJwtSecret()) as { sub: string }
+    const [user] = await db.select().from(users).where(eq(users.id, payload.sub)).limit(1)
+    if (!user) {
+      res.status(401).json({ error: 'Invalid token' })
+      return
+    }
+    req.user = user
+    next()
+  } catch {
     res.status(401).json({ error: 'Invalid token' })
-    return
   }
+}
 
-  req.user = data.user
-  next()
+export function toPublicUser(user: User) {
+  return {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    displayName: user.displayName,
+    bio: user.bio,
+    createdAt: user.createdAt,
+  }
 }

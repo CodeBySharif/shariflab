@@ -19,8 +19,10 @@ import CloseIcon from '@mui/icons-material/Close'
 import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
 import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined'
 import LogoutIcon from '@mui/icons-material/Logout'
+import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined'
 import { useAuth } from '../context/AuthContext'
 import { useColorMode } from '../context/ColorModeContext'
+import { useToast } from '../context/ToastContext'
 
 export interface LayoutOutletContext {
   showAddForm: boolean
@@ -30,6 +32,7 @@ export interface LayoutOutletContext {
 export default function Layout() {
   const { user, signOut } = useAuth()
   const { mode, toggleMode } = useColorMode()
+  const { showToast } = useToast()
   const location = useLocation()
   const navigate = useNavigate()
   const isHome = location.pathname === '/'
@@ -40,15 +43,7 @@ export default function Layout() {
     if (!isHome) setShowAddForm(false)
   }, [isHome])
 
-  useEffect(() => {
-    const onPageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) window.location.reload()
-    }
-    window.addEventListener('pageshow', onPageShow)
-    return () => window.removeEventListener('pageshow', onPageShow)
-  }, [])
-
-  const initial = user?.email?.charAt(0).toUpperCase() ?? '?'
+  const initial = (user?.displayName || user?.username || '?').charAt(0).toUpperCase()
 
   const onAddClick = () => {
     if (isHome) {
@@ -56,6 +51,14 @@ export default function Layout() {
       return
     }
     navigate('/?add=1')
+  }
+
+  const copyShareLink = async () => {
+    if (!user?.username) return
+    const url = `${window.location.origin}/u/${user.username}`
+    await navigator.clipboard.writeText(url)
+    showToast('Public hub link copied')
+    setMenuAnchor(null)
   }
 
   return (
@@ -87,15 +90,7 @@ export default function Layout() {
                 component="img"
                 src="/logo.svg"
                 alt=""
-                sx={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: '6px',
-                  boxShadow: (t) =>
-                    t.palette.mode === 'dark'
-                      ? 'inset 0 1px 0 rgba(255,255,255,0.12)'
-                      : 'inset 0 1px 0 rgba(255,255,255,0.8)',
-                }}
+                sx={{ width: 28, height: 28, borderRadius: '6px' }}
               />
               <Box>
                 <Typography
@@ -139,7 +134,6 @@ export default function Layout() {
                 isHome && showAddForm ? <CloseIcon fontSize="small" /> : <AddIcon fontSize="small" />
               }
               onClick={onAddClick}
-              aria-label={isHome && showAddForm ? 'Cancel add project' : 'Add project'}
             >
               {isHome && showAddForm ? 'Cancel' : 'Add project'}
             </Button>
@@ -174,15 +168,33 @@ export default function Layout() {
               anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
               slotProps={{ paper: { sx: { mt: 1.5, minWidth: 220 } } }}
             >
-              {user?.email && (
+              {user && (
                 <Box sx={{ px: 2, py: 1.25 }}>
                   <Typography variant="overline" color="text.secondary">
                     Signed in as
                   </Typography>
                   <Typography variant="body2" sx={{ wordBreak: 'break-all' }}>
+                    @{user.username}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ wordBreak: 'break-all' }}>
                     {user.email}
                   </Typography>
                 </Box>
+              )}
+              <Divider />
+              <MenuItem onClick={copyShareLink} sx={{ minHeight: 44, fontSize: '0.875rem' }}>
+                <ShareOutlinedIcon sx={{ fontSize: 18, mr: 1.25 }} />
+                Copy public hub link
+              </MenuItem>
+              {user && (
+                <MenuItem
+                  component={RouterLink}
+                  to={`/u/${user.username}`}
+                  onClick={() => setMenuAnchor(null)}
+                  sx={{ minHeight: 44, fontSize: '0.875rem' }}
+                >
+                  View public hub
+                </MenuItem>
               )}
               <Divider />
               <MenuItem

@@ -1,55 +1,74 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import type { User, Session } from '@supabase/supabase-js'
-import { supabase } from '../lib/supabase'
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import api, { getToken, setToken } from '../api/client'
+import type { AuthUser } from '../types'
 
 interface AuthState {
-  user: User | null
-  session: Session | null
+  user: AuthUser | null
   loading: boolean
-  signInWithGoogle: () => Promise<void>
-  signOut: () => Promise<void>
+  login: (login: string, password: string) => Promise<void>
+  register: (input: {
+    username: string
+    email: string
+    password: string
+    displayName?: string
+  }) => Promise<void>
+  signOut: () => void
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthState | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [session, setSession] = useState<Session | null>(null)
+  const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-      setUser(data.session?.user ?? null)
-      setLoading(false)
-    })
-
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
-      setSession(sess)
-      setUser(sess?.user ?? null)
-      setLoading(false)
-    })
-
-    return () => sub.subscription.unsubscribe()
+  const refreshUser = useCallback(async () => {
+    const token = getToken()
+    if (!token) {
+      setUser(null)
+      return
+    }
+    const { data } = await api.get<{ user: AuthUser }>('/auth/me')
+    setUser(data.user)
   }, [])
 
-  const signInWithGoogle = async () => {
-    const redirectUrl = new URL('/', window.location.origin)
-    redirectUrl.searchParams.set('auth_return', Date.now().toString())
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: redirectUrl.toString() },
+  useEffect(() => {
+    refreshUser()
+      .catch(() => {
+        setToken(null)
+        setUser(null)
+      })
+      .finally(() => setLoading(false))
+  }, [refreshUser])
+
+  const login = async (loginValue: string, password: string) => {
+    const { data } = await api.post<{ token: string; user: AuthUser }>('/auth/login', {
+      login: loginValue,
+      password,
     })
-    if (error) throw error
+    setToken(data.token)
+    setUser(data.user)
   }
 
-  const signOut = async () => {
-    await supabase.auth.signOut()
+  const register = async (input: {
+    username: string
+    email: string
+    password: string
+    displayName?: string
+  }) => {
+    const { data } = await api.post<{ token: string; user: AuthUser }>('/auth/register', input)
+    setToken(data.token)
+    setUser(data.user)
+  }
+
+  const signOut = () => {
+    setToken(null)
+    setUser(null)
     window.location.replace(`/login?signed_out=${Date.now()}`)
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user, loading, login, register, signOut, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )
