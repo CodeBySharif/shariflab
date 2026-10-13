@@ -40,10 +40,10 @@ export default function LoginPage() {
         <CardContent sx={{ p: { xs: 3, sm: 4 }, '&:last-child': { pb: { xs: 3, sm: 4 } } }}>
           <Stack spacing={1}>
             <Typography variant="h4" component="h1" sx={{ letterSpacing: '-0.02em' }}>
-              Sharif Lab
+              Project hub
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Sign in to manage your project hub.
+              Sign in to manage your projects.
             </Typography>
           </Stack>
 

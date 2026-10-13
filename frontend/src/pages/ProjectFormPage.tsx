@@ -5,8 +5,6 @@ import {
   Alert,
   Box,
   Button,
-  Card,
-  CardContent,
   Checkbox,
   FormControlLabel,
   Grid,
@@ -23,6 +21,32 @@ import FormSkeleton from '../components/skeletons/FormSkeleton'
 import TechStackInput from '../components/TechStackInput'
 import { useToast } from '../context/ToastContext'
 import type { Project, ProjectDiagram, ProjectStatus } from '../types'
+
+const stickyBarSx = {
+  position: 'sticky' as const,
+  top: 0,
+  zIndex: 5,
+  bgcolor: 'background.default',
+  py: 1.5,
+  mb: 2,
+  mx: { xs: -2, sm: -3 },
+  px: { xs: 2, sm: 3 },
+  borderBottom: 1,
+  borderColor: 'divider',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 1.5,
+  flexWrap: 'wrap' as const,
+}
+
+const sectionSx = {
+  border: 1,
+  borderColor: 'divider',
+  borderRadius: 2,
+  bgcolor: 'background.paper',
+  p: { xs: 2, md: 2.5 },
+  height: '100%',
+}
 
 export default function ProjectFormPage() {
   const { id } = useParams<{ id: string }>()
@@ -188,283 +212,292 @@ export default function ProjectFormPage() {
   }
 
   return (
-    <Box>
-      <Button
-        component={RouterLink}
-        to={id ? `/projects/${id}` : '/'}
-        startIcon={<ArrowBackIcon />}
-        size="small"
-        sx={{ mb: 2 }}
-      >
-        Back
-      </Button>
-
-      <Typography variant="h4" sx={{ mb: 3, letterSpacing: '-0.02em', fontWeight: 600 }}>
-        Edit case study
-      </Typography>
-
-      <Box
-        component="form"
-        onSubmit={(e) => {
-          e.preventDefault()
-          saveMutation.mutate()
-        }}
-      >
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Card sx={{ mb: 3 }}>
-              <CardContent sx={{ p: { xs: 2.5, md: 3 } }}>
-                <Stack spacing={2.5}>
-                  <TextField label="Name" value={name} onChange={(e) => setName(e.target.value)} required fullWidth />
-                  <TextField
-                    label="URL slug"
-                    value={slug}
-                    onChange={(e) => setSlug(e.target.value)}
-                    helperText="Used in public URL: /u/you/p/slug"
-                    fullWidth
-                  />
-                  <TextField
-                    label="Description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    multiline
-                    minRows={3}
-                    fullWidth
-                  />
-                  <TextField
-                    label="Problem statement"
-                    value={problemStatement}
-                    onChange={(e) => setProblemStatement(e.target.value)}
-                    multiline
-                    minRows={3}
-                    fullWidth
-                  />
-                  <TextField
-                    label="How it solves the problem"
-                    value={solution}
-                    onChange={(e) => setSolution(e.target.value)}
-                    multiline
-                    minRows={3}
-                    fullWidth
-                  />
-                  <TextField
-                    label="Target users"
-                    value={targetUsers}
-                    onChange={(e) => setTargetUsers(e.target.value)}
-                    multiline
-                    minRows={2}
-                    fullWidth
-                  />
-                  <TextField
-                    label="Use cases"
-                    value={useCases}
-                    onChange={(e) => setUseCases(e.target.value)}
-                    multiline
-                    minRows={2}
-                    fullWidth
-                  />
-                  <TextField
-                    label="Key features"
-                    value={keyFeatures}
-                    onChange={(e) => setKeyFeatures(e.target.value)}
-                    multiline
-                    minRows={2}
-                    fullWidth
-                  />
-                  <TextField
-                    label="Lessons learned"
-                    value={lessonsLearned}
-                    onChange={(e) => setLessonsLearned(e.target.value)}
-                    multiline
-                    minRows={2}
-                    fullWidth
-                  />
-                </Stack>
-              </CardContent>
-            </Card>
-
-            <Card sx={{ mb: 3 }}>
-              <CardContent sx={{ p: { xs: 2.5, md: 3 } }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>
-                  Snapshot
-                </Typography>
-                {thumbnailUrl && (
-                  <Box
-                    component="img"
-                    src={thumbnailUrl}
-                    alt=""
-                    sx={{
-                      width: '100%',
-                      maxHeight: 240,
-                      objectFit: 'cover',
-                      objectPosition: 'top',
-                      borderRadius: 1,
-                      border: 1,
-                      borderColor: 'divider',
-                      mb: 2,
-                    }}
-                  />
-                )}
-                <Button variant="outlined" component="label" disabled={uploadThumb.isPending}>
-                  {uploadThumb.isPending ? 'Uploading…' : 'Upload snapshot'}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    hidden
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) uploadThumb.mutate(file)
-                      e.target.value = ''
-                    }}
-                  />
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent sx={{ p: { xs: 2.5, md: 3 } }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>
-                  Diagrams
-                </Typography>
-                <Stack spacing={2} sx={{ mb: 2 }}>
-                  {diagrams.map((d) => (
-                    <Stack key={d.id} direction="row" spacing={1.5} sx={{ alignItems: 'flex-start' }}>
-                      <Box
-                        component="img"
-                        src={d.imageUrl}
-                        alt={d.title || 'Diagram'}
-                        sx={{
-                          width: 120,
-                          height: 80,
-                          objectFit: 'cover',
-                          borderRadius: 1,
-                          border: 1,
-                          borderColor: 'divider',
-                          flexShrink: 0,
-                        }}
-                      />
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="body2">{d.title || 'Untitled diagram'}</Typography>
-                      </Box>
-                      <IconButton
-                        size="small"
-                        aria-label="Delete diagram"
-                        onClick={() => deleteDiagram.mutate(d.id)}
-                        disabled={deleteDiagram.isPending}
-                      >
-                        <DeleteOutlinedIcon fontSize="small" />
-                      </IconButton>
-                    </Stack>
-                  ))}
-                </Stack>
-                <Button variant="outlined" component="label" disabled={uploadDiagram.isPending}>
-                  {uploadDiagram.isPending ? 'Uploading…' : 'Add diagram'}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    hidden
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) {
-                        const title = window.prompt('Diagram title (optional)') ?? ''
-                        uploadDiagram.mutate({ file, title })
-                      }
-                      e.target.value = ''
-                    }}
-                  />
-                </Button>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Card sx={{ mb: 3 }}>
-              <CardContent sx={{ p: 2.5 }}>
-                <Stack spacing={2}>
-                  <TechStackInput value={techStack} onChange={setTechStack} />
-                  <TextField
-                    label="Website URL"
-                    value={websiteUrl}
-                    onChange={(e) => setWebsiteUrl(e.target.value)}
-                    fullWidth
-                  />
-                  <TextField
-                    label="GitHub URL"
-                    value={githubUrl}
-                    onChange={(e) => setGithubUrl(e.target.value)}
-                    fullWidth
-                  />
-                  <TextField
-                    label="Demo URL"
-                    value={demoUrl}
-                    onChange={(e) => setDemoUrl(e.target.value)}
-                    fullWidth
-                  />
-                  <TextField
-                    label="Deploy location"
-                    value={deployLocation}
-                    onChange={(e) => setDeployLocation(e.target.value)}
-                    placeholder="e.g. VPS in Singapore"
-                    fullWidth
-                  />
-                  <TextField
-                    label="Deploy platform"
-                    value={deployPlatform}
-                    onChange={(e) => setDeployPlatform(e.target.value)}
-                    placeholder="e.g. Docker Compose"
-                    fullWidth
-                  />
-                  <TextField
-                    select
-                    label="Status"
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value as ProjectStatus)}
-                    fullWidth
-                  >
-                    <MenuItem value="wip">WIP</MenuItem>
-                    <MenuItem value="live">Live</MenuItem>
-                    <MenuItem value="archived">Archived</MenuItem>
-                  </TextField>
-                  <TextField
-                    label="Timeline"
-                    value={timeline}
-                    onChange={(e) => setTimeline(e.target.value)}
-                    placeholder="e.g. Jan–Mar 2026"
-                    fullWidth
-                  />
-                  <TextField
-                    label="Your role"
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    fullWidth
-                  />
-                  <FormControlLabel
-                    control={
-                      <Checkbox checked={isPublished} onChange={(e) => setIsPublished(e.target.checked)} />
-                    }
-                    label="Published on public hub"
-                  />
-                </Stack>
-              </CardContent>
-            </Card>
-
-            <Stack direction="row" spacing={1.5}>
-              <Button
-                type="button"
-                variant="outlined"
-                fullWidth
-                onClick={() => navigate(id ? `/projects/${id}` : '/')}
-                disabled={saveMutation.isPending}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" variant="contained" fullWidth disabled={saveMutation.isPending}>
-                {saveMutation.isPending ? 'Saving…' : 'Save'}
-              </Button>
-            </Stack>
-          </Grid>
-        </Grid>
+    <Box
+      component="form"
+      onSubmit={(e) => {
+        e.preventDefault()
+        saveMutation.mutate()
+      }}
+    >
+      <Box sx={stickyBarSx}>
+        <Button
+          component={RouterLink}
+          to={id ? `/projects/${id}` : '/'}
+          startIcon={<ArrowBackIcon />}
+          size="small"
+          color="inherit"
+          type="button"
+        >
+          Back
+        </Button>
+        <Typography
+          variant="h6"
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            fontWeight: 600,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {name || 'Edit case study'}
+        </Typography>
+        <Stack direction="row" spacing={1}>
+          <Button
+            type="button"
+            variant="outlined"
+            size="small"
+            onClick={() => navigate(id ? `/projects/${id}` : '/')}
+            disabled={saveMutation.isPending}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" variant="contained" size="small" disabled={saveMutation.isPending}>
+            {saveMutation.isPending ? 'Saving…' : 'Save'}
+          </Button>
+        </Stack>
       </Box>
+
+      <Grid container spacing={2.5} sx={{ alignItems: 'stretch' }}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Box sx={sectionSx}>
+            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
+              Case study
+            </Typography>
+            <Stack spacing={2.5}>
+              <TextField label="Name" value={name} onChange={(e) => setName(e.target.value)} required fullWidth />
+              <TextField
+                label="URL slug"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                helperText="Used in public URL: /u/you/p/slug"
+                fullWidth
+              />
+              <TextField
+                label="Description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                multiline
+                minRows={3}
+                fullWidth
+              />
+              <TextField
+                label="Problem statement"
+                value={problemStatement}
+                onChange={(e) => setProblemStatement(e.target.value)}
+                multiline
+                minRows={3}
+                fullWidth
+              />
+              <TextField
+                label="How it solves the problem"
+                value={solution}
+                onChange={(e) => setSolution(e.target.value)}
+                multiline
+                minRows={3}
+                fullWidth
+              />
+              <TextField
+                label="Target users"
+                value={targetUsers}
+                onChange={(e) => setTargetUsers(e.target.value)}
+                multiline
+                minRows={2}
+                fullWidth
+              />
+              <TextField
+                label="Use cases"
+                value={useCases}
+                onChange={(e) => setUseCases(e.target.value)}
+                multiline
+                minRows={2}
+                fullWidth
+              />
+              <TextField
+                label="Key features"
+                value={keyFeatures}
+                onChange={(e) => setKeyFeatures(e.target.value)}
+                multiline
+                minRows={2}
+                fullWidth
+              />
+              <TextField
+                label="Lessons learned"
+                value={lessonsLearned}
+                onChange={(e) => setLessonsLearned(e.target.value)}
+                multiline
+                minRows={2}
+                fullWidth
+              />
+            </Stack>
+          </Box>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Stack spacing={2.5} sx={{ height: '100%' }}>
+            <Box sx={sectionSx}>
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
+                Links & status
+              </Typography>
+              <Stack spacing={2.5}>
+                <TechStackInput value={techStack} onChange={setTechStack} />
+                <TextField
+                  label="Website URL"
+                  value={websiteUrl}
+                  onChange={(e) => setWebsiteUrl(e.target.value)}
+                  fullWidth
+                />
+                <TextField
+                  label="GitHub URL"
+                  value={githubUrl}
+                  onChange={(e) => setGithubUrl(e.target.value)}
+                  fullWidth
+                />
+                <TextField
+                  label="Demo URL"
+                  value={demoUrl}
+                  onChange={(e) => setDemoUrl(e.target.value)}
+                  fullWidth
+                />
+                <TextField
+                  label="Deploy location"
+                  value={deployLocation}
+                  onChange={(e) => setDeployLocation(e.target.value)}
+                  placeholder="e.g. VPS in Singapore"
+                  fullWidth
+                />
+                <TextField
+                  label="Deploy platform"
+                  value={deployPlatform}
+                  onChange={(e) => setDeployPlatform(e.target.value)}
+                  placeholder="e.g. Docker Compose"
+                  fullWidth
+                />
+                <TextField
+                  select
+                  label="Status"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as ProjectStatus)}
+                  fullWidth
+                >
+                  <MenuItem value="wip">WIP</MenuItem>
+                  <MenuItem value="live">Live</MenuItem>
+                  <MenuItem value="archived">Archived</MenuItem>
+                </TextField>
+                <TextField
+                  label="Timeline"
+                  value={timeline}
+                  onChange={(e) => setTimeline(e.target.value)}
+                  placeholder="e.g. Jan–Mar 2026"
+                  fullWidth
+                />
+                <TextField
+                  label="Your role"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  fullWidth
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox checked={isPublished} onChange={(e) => setIsPublished(e.target.checked)} />
+                  }
+                  label="Published on public hub"
+                />
+              </Stack>
+            </Box>
+
+            <Box sx={sectionSx}>
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
+                Snapshot
+              </Typography>
+              {thumbnailUrl && (
+                <Box
+                  component="img"
+                  src={thumbnailUrl}
+                  alt=""
+                  sx={{
+                    width: '100%',
+                    maxHeight: 200,
+                    objectFit: 'cover',
+                    objectPosition: 'top',
+                    borderRadius: 1,
+                    border: 1,
+                    borderColor: 'divider',
+                    mb: 2,
+                  }}
+                />
+              )}
+              <Button variant="outlined" component="label" disabled={uploadThumb.isPending}>
+                {uploadThumb.isPending ? 'Uploading…' : 'Upload snapshot'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) uploadThumb.mutate(file)
+                    e.target.value = ''
+                  }}
+                />
+              </Button>
+            </Box>
+
+            <Box sx={sectionSx}>
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
+                Diagrams
+              </Typography>
+              <Stack spacing={2} sx={{ mb: 2 }}>
+                {diagrams.map((d) => (
+                  <Stack key={d.id} direction="row" spacing={1.5} sx={{ alignItems: 'flex-start' }}>
+                    <Box
+                      component="img"
+                      src={d.imageUrl}
+                      alt={d.title || 'Diagram'}
+                      sx={{
+                        width: 120,
+                        height: 80,
+                        objectFit: 'cover',
+                        borderRadius: 1,
+                        border: 1,
+                        borderColor: 'divider',
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="body2">{d.title || 'Untitled diagram'}</Typography>
+                    </Box>
+                    <IconButton
+                      size="small"
+                      aria-label="Delete diagram"
+                      onClick={() => deleteDiagram.mutate(d.id)}
+                      disabled={deleteDiagram.isPending}
+                    >
+                      <DeleteOutlinedIcon fontSize="small" />
+                    </IconButton>
+                  </Stack>
+                ))}
+              </Stack>
+              <Button variant="outlined" component="label" disabled={uploadDiagram.isPending}>
+                {uploadDiagram.isPending ? 'Uploading…' : 'Add diagram'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      const title = window.prompt('Diagram title (optional)') ?? ''
+                      uploadDiagram.mutate({ file, title })
+                    }
+                    e.target.value = ''
+                  }}
+                />
+              </Button>
+            </Box>
+          </Stack>
+        </Grid>
+      </Grid>
     </Box>
   )
 }

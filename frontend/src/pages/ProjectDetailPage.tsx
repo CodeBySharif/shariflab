@@ -1,12 +1,29 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link as RouterLink, useParams } from 'react-router-dom'
-import { Alert, Box, Button, Stack } from '@mui/material'
+import { Alert, Box, Button, Typography } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import api from '../api/client'
 import FormSkeleton from '../components/skeletons/FormSkeleton'
 import ProjectCaseStudy from '../components/ProjectCaseStudy'
 import type { Project } from '../types'
+
+const stickyBarSx = {
+  position: 'sticky' as const,
+  top: 0,
+  zIndex: 5,
+  bgcolor: 'background.default',
+  py: 1.5,
+  mb: 2,
+  mx: { xs: -2, sm: -3 },
+  px: { xs: 2, sm: 3 },
+  borderBottom: 1,
+  borderColor: 'divider',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 1.5,
+  flexWrap: 'wrap' as const,
+}
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -42,10 +59,29 @@ export default function ProjectDetailPage() {
 
   return (
     <Box>
-      <Stack direction="row" spacing={1} sx={{ mb: 3, justifyContent: 'space-between', flexWrap: 'wrap' }}>
-        <Button component={RouterLink} to="/" startIcon={<ArrowBackIcon />} size="small">
-          All projects
+      <Box sx={stickyBarSx}>
+        <Button
+          component={RouterLink}
+          to="/"
+          startIcon={<ArrowBackIcon />}
+          size="small"
+          color="inherit"
+        >
+          Back
         </Button>
+        <Typography
+          variant="h6"
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            fontWeight: 600,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {project.name}
+        </Typography>
         <Button
           component={RouterLink}
           to={`/projects/${project.id}/edit`}
@@ -53,10 +89,11 @@ export default function ProjectDetailPage() {
           variant="outlined"
           size="small"
         >
-          Edit case study
+          Edit
         </Button>
-      </Stack>
-      <ProjectCaseStudy project={project} />
+      </Box>
+
+      <ProjectCaseStudy project={project} hideTitle />
     </Box>
   )
 }

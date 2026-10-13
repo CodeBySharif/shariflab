@@ -1,15 +1,20 @@
 import { Link as RouterLink } from 'react-router-dom'
 import {
   Box,
-  Button,
   Card,
-  CardActions,
   CardContent,
   CardMedia,
   Chip,
+  IconButton,
   Stack,
+  Tooltip,
   Typography,
 } from '@mui/material'
+import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import GitHubIcon from '@mui/icons-material/GitHub'
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
+import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import { parseTechStack } from '../lib/techStack'
 import type { Project } from '../types'
 
@@ -17,16 +22,14 @@ function Placeholder({ name }: { name: string }) {
   return (
     <Box
       sx={{
-        height: 180,
+        aspectRatio: '16 / 9',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        bgcolor: 'background.default',
-        borderBottom: 1,
-        borderColor: 'divider',
+        bgcolor: 'action.hover',
       }}
     >
-      <Typography sx={{ fontSize: '1.75rem', fontWeight: 600, color: 'text.secondary' }}>
+      <Typography sx={{ fontSize: '2rem', fontWeight: 700, color: 'text.secondary' }}>
         {name.charAt(0).toUpperCase()}
       </Typography>
     </Box>
@@ -48,47 +51,69 @@ export default function ProjectCard({
   const detailsPath = detailTo ?? `/projects/${project.id}`
 
   return (
-    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <Box sx={{ position: 'relative', flexShrink: 0 }}>
+    <Card
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        bgcolor: 'transparent',
+        border: 'none',
+        boxShadow: 'none',
+        backgroundImage: 'none',
+      }}
+    >
+      <Box
+        component={RouterLink}
+        to={detailsPath}
+        sx={{
+          display: 'block',
+          textDecoration: 'none',
+          color: 'inherit',
+          borderRadius: 3,
+          overflow: 'hidden',
+          border: 1,
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+          '&:hover': { opacity: 0.92 },
+        }}
+      >
         {project.thumbnailUrl ? (
           <CardMedia
             component="img"
             image={project.thumbnailUrl}
             alt=""
-            sx={{ height: 180, objectFit: 'cover', objectPosition: 'top' }}
+            sx={{
+              width: '100%',
+              aspectRatio: '16 / 9',
+              objectFit: 'cover',
+              objectPosition: 'top',
+              display: 'block',
+            }}
           />
         ) : (
           <Placeholder name={project.name} />
         )}
-        {(project.deployPlatform || project.deployLocation) && (
-          <Chip
-            label={project.deployLocation || project.deployPlatform}
-            size="small"
-            sx={{
-              position: 'absolute',
-              top: 12,
-              right: 12,
-              bgcolor: 'rgba(15, 15, 17, 0.9)',
-              color: '#fafafa',
-              borderRadius: '4px',
-              height: 22,
-            }}
-          />
-        )}
       </Box>
 
-      <CardContent sx={{ px: 2.5, pt: 2, pb: 1.5, flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.75 }}>
+      <CardContent sx={{ px: 0.25, pt: 1.5, pb: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'flex-start', mb: 0.75 }}>
           <Typography
-            variant="h6"
+            component={RouterLink}
+            to={detailsPath}
+            variant="subtitle1"
             sx={{
               flex: 1,
               minWidth: 0,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              fontSize: '1.0625rem',
               fontWeight: 600,
+              lineHeight: 1.35,
+              textDecoration: 'none',
+              color: 'text.primary',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              '&:hover': { color: 'primary.main' },
             }}
           >
             {project.name}
@@ -99,102 +124,112 @@ export default function ProjectCard({
               size="small"
               color={project.isPublished ? 'success' : 'default'}
               variant="outlined"
-              sx={{ borderRadius: '4px', height: 22 }}
+              sx={{ borderRadius: '4px', height: 22, flexShrink: 0 }}
             />
           )}
         </Stack>
 
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{
-            minHeight: 40,
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}
-        >
-          {project.description || project.problemStatement || 'No description'}
-        </Typography>
-
         {stack.length > 0 && (
-          <Stack direction="row" useFlexGap sx={{ mt: 'auto', pt: 1.5, flexWrap: 'wrap', gap: 0.75 }}>
-            {stack.slice(0, 4).map((tech) => (
+          <Stack direction="row" useFlexGap sx={{ flexWrap: 'wrap', gap: 0.75, mb: 1 }}>
+            {stack.map((tech) => (
               <Chip
                 key={tech}
                 label={tech}
                 size="small"
                 variant="outlined"
-                sx={{ maxWidth: 96, borderRadius: '4px', height: 22 }}
+                sx={{ borderRadius: '4px', height: 24 }}
               />
             ))}
           </Stack>
         )}
-      </CardContent>
 
-      <CardActions
-        sx={{
-          px: 2.5,
-          py: 1.5,
-          gap: 0.5,
-          borderTop: 1,
-          borderColor: 'divider',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-        }}
-      >
-        {project.websiteUrl ? (
-          <Button
-            component="a"
-            href={project.websiteUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            variant="contained"
-            size="small"
-          >
-            Open site
-          </Button>
-        ) : (
-          <Button component={RouterLink} to={detailsPath} variant="contained" size="small">
-            View
-          </Button>
-        )}
-        <Stack direction="row" spacing={0.25}>
-          <Button
-            component={RouterLink}
-            to={detailsPath}
-            size="small"
-            color="inherit"
-            sx={{ color: 'text.secondary', minWidth: 0, px: 1.25 }}
-          >
-            Details
-          </Button>
-          {!readOnly && (
-            <>
-              <Button
-                component={RouterLink}
-                to={`/projects/${project.id}/edit`}
-                size="small"
-                color="inherit"
-                sx={{ color: 'text.secondary', minWidth: 0, px: 1.25 }}
-              >
-                Edit
-              </Button>
-              {onDelete && (
-                <Button
+        <Stack
+          direction="row"
+          sx={{
+            mt: 'auto',
+            pt: 0.5,
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Stack direction="row" spacing={0.25}>
+            <Tooltip title="Visit site">
+              <span>
+                <IconButton
+                  component="a"
+                  href={project.websiteUrl || undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   size="small"
-                  color="error"
-                  onClick={() => onDelete(project)}
-                  sx={{ minWidth: 0, px: 1.25 }}
+                  disabled={!project.websiteUrl}
+                  aria-label="Visit site"
+                  sx={{ width: 40, height: 40 }}
                 >
-                  Delete
-                </Button>
-              )}
-            </>
-          )}
+                  <OpenInNewIcon sx={{ fontSize: 20 }} />
+                </IconButton>
+              </span>
+            </Tooltip>
+            <Tooltip title="GitHub">
+              <span>
+                <IconButton
+                  component="a"
+                  href={project.githubUrl || undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  size="small"
+                  disabled={!project.githubUrl}
+                  aria-label="GitHub"
+                  sx={{ width: 40, height: 40 }}
+                >
+                  <GitHubIcon sx={{ fontSize: 20 }} />
+                </IconButton>
+              </span>
+            </Tooltip>
+          </Stack>
+
+          <Stack direction="row" spacing={0.25}>
+            <Tooltip title="Details">
+              <IconButton
+                component={RouterLink}
+                to={detailsPath}
+                size="small"
+                aria-label="Details"
+                sx={{ width: 40, height: 40 }}
+              >
+                <InfoOutlinedIcon sx={{ fontSize: 20 }} />
+              </IconButton>
+            </Tooltip>
+            {!readOnly && (
+              <>
+                <Tooltip title="Edit">
+                  <IconButton
+                    component={RouterLink}
+                    to={`/projects/${project.id}/edit`}
+                    size="small"
+                    aria-label="Edit"
+                    sx={{ width: 40, height: 40 }}
+                  >
+                    <EditOutlinedIcon sx={{ fontSize: 20 }} />
+                  </IconButton>
+                </Tooltip>
+                {onDelete && (
+                  <Tooltip title="Delete">
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => onDelete(project)}
+                      aria-label="Delete"
+                      sx={{ width: 40, height: 40 }}
+                    >
+                      <DeleteOutlinedIcon sx={{ fontSize: 20 }} />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </>
+            )}
+          </Stack>
         </Stack>
-      </CardActions>
+      </CardContent>
     </Card>
   )
 }

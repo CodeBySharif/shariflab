@@ -4,7 +4,6 @@ import {
   AppBar,
   Avatar,
   Box,
-  Button,
   Container,
   Divider,
   IconButton,
@@ -17,9 +16,11 @@ import {
 import AddIcon from '@mui/icons-material/Add'
 import CloseIcon from '@mui/icons-material/Close'
 import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
+import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined'
 import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined'
 import LogoutIcon from '@mui/icons-material/Logout'
 import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined'
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import { useAuth } from '../context/AuthContext'
 import { useColorMode } from '../context/ColorModeContext'
 import { useToast } from '../context/ToastContext'
@@ -58,7 +59,6 @@ export default function Layout() {
     const url = `${window.location.origin}/u/${user.username}`
     await navigator.clipboard.writeText(url)
     showToast('Public hub link copied')
-    setMenuAnchor(null)
   }
 
   return (
@@ -72,78 +72,107 @@ export default function Layout() {
     >
       <AppBar position="sticky" color="transparent" elevation={0} sx={{ flexShrink: 0 }}>
         <Container>
-          <Toolbar disableGutters sx={{ gap: 1 }}>
+          <Toolbar disableGutters sx={{ gap: 0.5 }}>
             <Box
               component={RouterLink}
               to="/"
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 1.5,
+                gap: 1.25,
                 textDecoration: 'none',
                 color: 'text.primary',
                 mr: 'auto',
                 minHeight: 44,
               }}
             >
-              <Box
-                component="img"
-                src="/logo.svg"
-                alt=""
-                sx={{ width: 28, height: 28, borderRadius: '6px' }}
-              />
-              <Box>
-                <Typography
-                  component="span"
-                  sx={{
-                    display: 'block',
-                    fontWeight: 700,
-                    fontSize: '0.9375rem',
-                    lineHeight: 1.2,
-                    letterSpacing: '-0.01em',
-                  }}
-                >
-                  Sharif Lab
-                </Typography>
-                <Typography
-                  component="span"
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ display: { xs: 'none', sm: 'block' }, lineHeight: 1.2 }}
-                >
-                  Project hub
-                </Typography>
-              </Box>
+              <FolderOutlinedIcon sx={{ fontSize: 26, color: 'primary.main' }} />
+              <Typography
+                component="span"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: '0.9375rem',
+                  lineHeight: 1.2,
+                  letterSpacing: '-0.01em',
+                }}
+              >
+                Project hub
+              </Typography>
             </Box>
 
-            <Tooltip title={mode === 'dark' ? 'Day mode' : 'Night mode'}>
-              <IconButton size="small" onClick={toggleMode} aria-label="Toggle color mode">
+            {user && (
+              <>
+                <Tooltip title="Copy public hub link">
+                  <IconButton
+                    size="small"
+                    onClick={copyShareLink}
+                    aria-label="Copy public hub link"
+                    sx={{ width: 40, height: 40 }}
+                  >
+                    <ShareOutlinedIcon sx={{ fontSize: 20 }} />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="View public hub">
+                  <IconButton
+                    component={RouterLink}
+                    to={`/u/${user.username}`}
+                    size="small"
+                    aria-label="View public hub"
+                    sx={{ width: 40, height: 40 }}
+                  >
+                    <VisibilityOutlinedIcon sx={{ fontSize: 20 }} />
+                  </IconButton>
+                </Tooltip>
+              </>
+            )}
+
+            <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+              <IconButton
+                size="small"
+                onClick={toggleMode}
+                aria-label="Toggle color mode"
+                sx={{ width: 40, height: 40 }}
+              >
                 {mode === 'dark' ? (
-                  <LightModeOutlinedIcon sx={{ fontSize: 18 }} />
+                  <LightModeOutlinedIcon sx={{ fontSize: 20 }} />
                 ) : (
-                  <DarkModeOutlinedIcon sx={{ fontSize: 18 }} />
+                  <DarkModeOutlinedIcon sx={{ fontSize: 20 }} />
                 )}
               </IconButton>
             </Tooltip>
 
-            <Button
-              size="small"
-              variant={isHome && showAddForm ? 'outlined' : 'contained'}
-              color={isHome && showAddForm ? 'inherit' : 'primary'}
-              startIcon={
-                isHome && showAddForm ? <CloseIcon fontSize="small" /> : <AddIcon fontSize="small" />
-              }
-              onClick={onAddClick}
-            >
-              {isHome && showAddForm ? 'Cancel' : 'Add project'}
-            </Button>
+            <Tooltip title={isHome && showAddForm ? 'Cancel' : 'Add project'}>
+              <IconButton
+                size="small"
+                color="primary"
+                onClick={onAddClick}
+                aria-label={isHome && showAddForm ? 'Cancel' : 'Add project'}
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: isHome && showAddForm ? 'transparent' : 'primary.main',
+                  color: isHome && showAddForm ? 'text.primary' : 'primary.contrastText',
+                  border: 1,
+                  borderColor: isHome && showAddForm ? 'divider' : 'primary.main',
+                  '&:hover': {
+                    bgcolor: isHome && showAddForm ? 'action.hover' : 'primary.dark',
+                  },
+                }}
+              >
+                {isHome && showAddForm ? (
+                  <CloseIcon sx={{ fontSize: 20 }} />
+                ) : (
+                  <AddIcon sx={{ fontSize: 20 }} />
+                )}
+              </IconButton>
+            </Tooltip>
 
             <Tooltip title="Account">
               <IconButton
                 size="small"
                 onClick={(e) => setMenuAnchor(e.currentTarget)}
                 aria-label="Account menu"
-                sx={{ p: 0.5 }}
+                sx={{ p: 0.5, width: 40, height: 40 }}
               >
                 <Avatar
                   sx={{
@@ -180,21 +209,6 @@ export default function Layout() {
                     {user.email}
                   </Typography>
                 </Box>
-              )}
-              <Divider />
-              <MenuItem onClick={copyShareLink} sx={{ minHeight: 44, fontSize: '0.875rem' }}>
-                <ShareOutlinedIcon sx={{ fontSize: 18, mr: 1.25 }} />
-                Copy public hub link
-              </MenuItem>
-              {user && (
-                <MenuItem
-                  component={RouterLink}
-                  to={`/u/${user.username}`}
-                  onClick={() => setMenuAnchor(null)}
-                  sx={{ minHeight: 44, fontSize: '0.875rem' }}
-                >
-                  View public hub
-                </MenuItem>
               )}
               <Divider />
               <MenuItem

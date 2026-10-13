@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
-import { Link as RouterLink, useOutletContext, useSearchParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { useOutletContext, useSearchParams } from 'react-router-dom'
 import {
   Alert,
   Box,
   Button,
   Card,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -20,19 +21,19 @@ import DeleteModal from '../components/DeleteModal'
 import ProjectCard from '../components/ProjectCard'
 import ProjectGridSkeleton from '../components/skeletons/ProjectGridSkeleton'
 import type { LayoutOutletContext } from '../components/Layout'
-import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
+import { parseTechStack } from '../lib/techStack'
 import type { Project } from '../types'
 
 export default function ProjectsPage() {
   const queryClient = useQueryClient()
   const { showToast } = useToast()
-  const { user } = useAuth()
   const { showAddForm, setShowAddForm } = useOutletContext<LayoutOutletContext>()
   const [searchParams, setSearchParams] = useSearchParams()
   const [name, setName] = useState('')
   const [websiteUrl, setWebsiteUrl] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null)
+  const [techFilter, setTechFilter] = useState('All')
 
   useEffect(() => {
     if (searchParams.get('add') === '1') {
@@ -53,6 +54,27 @@ export default function ProjectsPage() {
     queryKey: ['projects'],
     queryFn: async () => (await api.get<Project[]>('/projects')).data,
   })
+
+  const techPills = useMemo(() => {
+    const set = new Set<string>()
+    for (const p of projects) {
+      for (const t of parseTechStack(p.techStack)) set.add(t)
+    }
+    return ['All', ...Array.from(set).sort((a, b) => a.localeCompare(b))]
+  }, [projects])
+
+  const filtered = useMemo(() => {
+    if (techFilter === 'All') return projects
+    return projects.filter((p) =>
+      parseTechStack(p.techStack).some((t) => t.toLowerCase() === techFilter.toLowerCase()),
+    )
+  }, [projects, techFilter])
+
+  useEffect(() => {
+    if (techFilter !== 'All' && !techPills.includes(techFilter)) {
+      setTechFilter('All')
+    }
+  }, [techFilter, techPills])
 
   const createMutation = useMutation({
     mutationFn: async () =>
@@ -86,28 +108,57 @@ export default function ProjectsPage() {
 
   return (
     <Box>
-      <Stack direction="row" spacing={2} sx={{ mb: 3, alignItems: 'baseline', justifyContent: 'space-between' }}>
-        <Box>
-          <Typography variant="h4" sx={{ letterSpacing: '-0.02em', fontWeight: 600 }}>
-            Projects
-          </Typography>
-          {user && (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              Public hub:{' '}
-              <Box component={RouterLink} to={`/u/${user.username}`} sx={{ color: 'primary.main' }}>
-                /u/{user.username}
-              </Box>
-            </Typography>
-          )}
-        </Box>
+      <Stack
+        direction="row"
+        spacing={2}
+        sx={{ mb: 2, alignItems: 'baseline', justifyContent: 'space-between' }}
+      >
+        <Typography variant="h4" sx={{ letterSpacing: '-0.02em', fontWeight: 600 }}>
+          Projects
+        </Typography>
         {!showSkeleton && !isError && (
           <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0 }}>
-            {projects.length === 0
-              ? 'No projects yet'
-              : `${projects.length} project${projects.length === 1 ? '' : 's'}`}
+            {filtered.length === 0
+              ? 'No projects'
+              : `${filtered.length} project${filtered.length === 1 ? '' : 's'}`}
           </Typography>
         )}
       </Stack>
+
+      {!showSkeleton && !isError && projects.length > 0 && (
+        <Stack
+          direction="row"
+          useFlexGap
+          sx={{
+            flexWrap: 'wrap',
+            gap: 1,
+            mb: 3,
+          }}
+        >
+          {techPills.map((pill) => {
+            const active = techFilter === pill
+            return (
+              <Chip
+                key={pill}
+                label={pill}
+                clickable
+                onClick={() => setTechFilter(pill)}
+                sx={{
+                  height: 36,
+                  borderRadius: '8px',
+                  fontWeight: active ? 600 : 500,
+                  bgcolor: active ? 'text.primary' : 'action.hover',
+                  color: active ? 'background.default' : 'text.primary',
+                  border: 'none',
+                  '&:hover': {
+                    bgcolor: active ? 'text.primary' : 'action.selected',
+                  },
+                }}
+              />
+            )
+          })}
+        </Stack>
+      )}
 
       <Dialog
         open={showAddForm}
@@ -183,9 +234,18 @@ export default function ProjectsPage() {
             Add project
           </Button>
         </Card>
+      ) : filtered.length === 0 ? (
+        <Card sx={{ py: 6, px: 3, borderStyle: 'dashed' }}>
+          <Typography color="text.secondary">
+            No projects match the {techFilter} filter.
+          </Typography>
+          <Button size="small" sx={{ mt: 2 }} onClick={() => setTechFilter('All')}>
+            Show all
+          </Button>
+        </Card>
       ) : (
         <Grid container spacing={3} className="fade-in">
-          {projects.map((p) => (
+          {filtered.map((p) => (
             <Grid key={p.id} size={{ xs: 12, sm: 6, md: 4 }} sx={{ display: 'flex' }}>
               <Box sx={{ width: '100%' }}>
                 <ProjectCard project={p} onDelete={setDeleteTarget} />
