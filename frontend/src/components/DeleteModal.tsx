@@ -6,6 +6,8 @@ import {
   DialogTitle,
   Typography,
 } from '@mui/material'
+import CloseIcon from '@mui/icons-material/Close'
+import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
 import type { Project } from '../types'
 
 export default function DeleteModal({
@@ -28,12 +30,26 @@ export default function DeleteModal({
           undone.
         </Typography>
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button size="small" onClick={onCancel} disabled={isDeleting}>
-          Cancel
-        </Button>
-        <Button size="small" color="error" variant="contained" onClick={onConfirm} disabled={isDeleting}>
+      <DialogActions sx={{ px: 3, pb: 2, justifyContent: 'flex-start', gap: 1 }}>
+        <Button
+          size="small"
+          color="error"
+          variant="outlined"
+          startIcon={<DeleteOutlinedIcon />}
+          onClick={onConfirm}
+          disabled={isDeleting}
+        >
           {isDeleting ? 'Deleting...' : 'Delete'}
+        </Button>
+        <Button
+          size="small"
+          variant="outlined"
+          startIcon={<CloseIcon />}
+          onClick={onCancel}
+          disabled={isDeleting}
+          sx={{ ml: 'auto' }}
+        >
+          Cancel
         </Button>
       </DialogActions>
     </Dialog>

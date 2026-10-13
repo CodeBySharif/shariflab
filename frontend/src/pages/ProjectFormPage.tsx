@@ -8,36 +8,25 @@ import {
   Checkbox,
   FormControlLabel,
   Grid,
-  IconButton,
   MenuItem,
   Stack,
   TextField,
   Typography,
 } from '@mui/material'
+import AddPhotoAlternateOutlinedIcon from '@mui/icons-material/AddPhotoAlternateOutlined'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import CloseIcon from '@mui/icons-material/Close'
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
+import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined'
+import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined'
 import api from '../api/client'
+import DiagramTitleModal from '../components/DiagramTitleModal'
 import FormSkeleton from '../components/skeletons/FormSkeleton'
 import TechStackInput from '../components/TechStackInput'
+import IconAction from '../components/ui/IconAction'
+import { stickyPageBarSx } from '../components/pageChrome'
 import { useToast } from '../context/ToastContext'
 import type { Project, ProjectDiagram, ProjectStatus } from '../types'
-
-const stickyBarSx = {
-  position: 'sticky' as const,
-  top: 0,
-  zIndex: 5,
-  bgcolor: 'background.default',
-  py: 1.5,
-  mb: 2,
-  mx: { xs: -2, sm: -3 },
-  px: { xs: 2, sm: 3 },
-  borderBottom: 1,
-  borderColor: 'divider',
-  display: 'flex',
-  alignItems: 'center',
-  gap: 1.5,
-  flexWrap: 'wrap' as const,
-}
 
 const sectionSx = {
   border: 1,
@@ -75,6 +64,7 @@ export default function ProjectFormPage() {
   const [isPublished, setIsPublished] = useState(false)
   const [diagrams, setDiagrams] = useState<ProjectDiagram[]>([])
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null)
+  const [pendingDiagramFile, setPendingDiagramFile] = useState<File | null>(null)
 
   const cached = queryClient.getQueryData<Project[]>(['projects'])?.find((p) => p.id === id)
 
@@ -219,23 +209,24 @@ export default function ProjectFormPage() {
         saveMutation.mutate()
       }}
     >
-      <Box sx={stickyBarSx}>
+      <Box sx={stickyPageBarSx}>
         <Button
           component={RouterLink}
           to={id ? `/projects/${id}` : '/'}
           startIcon={<ArrowBackIcon />}
           size="small"
-          color="inherit"
+          variant="outlined"
           type="button"
         >
           Back
         </Button>
         <Typography
-          variant="h6"
+          variant="subtitle1"
           sx={{
             flex: 1,
             minWidth: 0,
             fontWeight: 600,
+            fontSize: '0.9375rem',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
@@ -248,12 +239,19 @@ export default function ProjectFormPage() {
             type="button"
             variant="outlined"
             size="small"
+            startIcon={<CloseIcon />}
             onClick={() => navigate(id ? `/projects/${id}` : '/')}
             disabled={saveMutation.isPending}
           >
             Cancel
           </Button>
-          <Button type="submit" variant="contained" size="small" disabled={saveMutation.isPending}>
+          <Button
+            type="submit"
+            variant="outlined"
+            size="small"
+            startIcon={<SaveOutlinedIcon />}
+            disabled={saveMutation.isPending}
+          >
             {saveMutation.isPending ? 'Saving…' : 'Save'}
           </Button>
         </Stack>
@@ -428,7 +426,13 @@ export default function ProjectFormPage() {
                   }}
                 />
               )}
-              <Button variant="outlined" component="label" disabled={uploadThumb.isPending}>
+              <Button
+                variant="outlined"
+                component="label"
+                size="small"
+                startIcon={<ImageOutlinedIcon />}
+                disabled={uploadThumb.isPending}
+              >
                 {uploadThumb.isPending ? 'Uploading…' : 'Upload snapshot'}
                 <input
                   type="file"
@@ -467,18 +471,24 @@ export default function ProjectFormPage() {
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography variant="body2">{d.title || 'Untitled diagram'}</Typography>
                     </Box>
-                    <IconButton
-                      size="small"
-                      aria-label="Delete diagram"
+                    <IconAction
+                      title="Delete diagram"
+                      color="error"
                       onClick={() => deleteDiagram.mutate(d.id)}
                       disabled={deleteDiagram.isPending}
                     >
-                      <DeleteOutlinedIcon fontSize="small" />
-                    </IconButton>
+                      <DeleteOutlinedIcon sx={{ fontSize: 20 }} />
+                    </IconAction>
                   </Stack>
                 ))}
               </Stack>
-              <Button variant="outlined" component="label" disabled={uploadDiagram.isPending}>
+              <Button
+                variant="outlined"
+                component="label"
+                size="small"
+                startIcon={<AddPhotoAlternateOutlinedIcon />}
+                disabled={uploadDiagram.isPending}
+              >
                 {uploadDiagram.isPending ? 'Uploading…' : 'Add diagram'}
                 <input
                   type="file"
@@ -486,10 +496,7 @@ export default function ProjectFormPage() {
                   hidden
                   onChange={(e) => {
                     const file = e.target.files?.[0]
-                    if (file) {
-                      const title = window.prompt('Diagram title (optional)') ?? ''
-                      uploadDiagram.mutate({ file, title })
-                    }
+                    if (file) setPendingDiagramFile(file)
                     e.target.value = ''
                   }}
                 />
@@ -498,6 +505,16 @@ export default function ProjectFormPage() {
           </Stack>
         </Grid>
       </Grid>
+
+      <DiagramTitleModal
+        open={Boolean(pendingDiagramFile)}
+        onCancel={() => setPendingDiagramFile(null)}
+        onConfirm={(title) => {
+          if (!pendingDiagramFile) return
+          uploadDiagram.mutate({ file: pendingDiagramFile, title })
+          setPendingDiagramFile(null)
+        }}
+      />
     </Box>
   )
 }

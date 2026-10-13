@@ -102,7 +102,7 @@ export default function Layout() {
 
             {user && (
               <>
-                <Tooltip title="Copy public hub link">
+                <Tooltip title="Copy public hub link" arrow>
                   <IconButton
                     size="small"
                     onClick={copyShareLink}
@@ -112,7 +112,7 @@ export default function Layout() {
                     <ShareOutlinedIcon sx={{ fontSize: 20 }} />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title="View public hub">
+                <Tooltip title="View public hub" arrow>
                   <IconButton
                     component={RouterLink}
                     to={`/u/${user.username}`}
@@ -126,7 +126,7 @@ export default function Layout() {
               </>
             )}
 
-            <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+            <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} arrow>
               <IconButton
                 size="small"
                 onClick={toggleMode}
@@ -141,7 +141,7 @@ export default function Layout() {
               </IconButton>
             </Tooltip>
 
-            <Tooltip title={isHome && showAddForm ? 'Cancel' : 'Add project'}>
+            <Tooltip title={isHome && showAddForm ? 'Cancel' : 'Add project'} arrow>
               <IconButton
                 size="small"
                 color="primary"
@@ -167,7 +167,7 @@ export default function Layout() {
               </IconButton>
             </Tooltip>
 
-            <Tooltip title="Account">
+            <Tooltip title="Account" arrow>
               <IconButton
                 size="small"
                 onClick={(e) => setMenuAnchor(e.currentTarget)}

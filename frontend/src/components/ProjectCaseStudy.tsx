@@ -8,23 +8,26 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
+import { statusColors, statusLabel } from '../lib/projectStatus'
 import { parseTechStack } from '../lib/techStack'
 import type { Project } from '../types'
 
-function Heading({ children }: { children: ReactNode }) {
+function Heading({ children, first = false }: { children: ReactNode; first?: boolean }) {
   return (
     <Typography
-      variant="h5"
+      variant="h6"
       component="h2"
       sx={{
-        mt: 3.5,
-        mb: 1.5,
-        pb: 1,
+        mt: first ? 0 : 2.75,
+        mb: 1,
+        pb: 0.85,
         borderBottom: 1,
         borderColor: 'divider',
-        fontWeight: 600,
-        letterSpacing: '-0.01em',
-        fontSize: '1.25rem',
+        fontWeight: 700,
+        letterSpacing: '-0.015em',
+        fontSize: '1.125rem',
+        lineHeight: 1.3,
+        color: 'text.primary',
       }}
     >
       {children}
@@ -35,7 +38,16 @@ function Heading({ children }: { children: ReactNode }) {
 function TextBlock({ value }: { value?: string | null }) {
   if (!value?.trim()) return null
   return (
-    <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', color: 'text.primary', lineHeight: 1.7 }}>
+    <Typography
+      variant="body2"
+      sx={{
+        whiteSpace: 'pre-wrap',
+        color: 'text.secondary',
+        lineHeight: 1.7,
+        fontSize: '0.875rem',
+        fontWeight: 400,
+      }}
+    >
       {value}
     </Typography>
   )
@@ -44,11 +56,8 @@ function TextBlock({ value }: { value?: string | null }) {
 function SidebarItem({ label, children }: { label: string; children: ReactNode }) {
   if (!children) return null
   return (
-    <Box sx={{ mb: 2.5 }}>
-      <Typography
-        variant="subtitle2"
-        sx={{ mb: 0.75, fontWeight: 600, fontSize: '0.8125rem' }}
-      >
+    <Box sx={{ mb: 2 }}>
+      <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block', fontWeight: 600 }}>
         {label}
       </Typography>
       {children}
@@ -66,18 +75,11 @@ export default function ProjectCaseStudy({
   hideTitle?: boolean
 }) {
   const stack = parseTechStack(project.techStack)
-  const hasAbout =
-    stack.length > 0 ||
-    project.deployLocation ||
-    project.deployPlatform ||
-    project.timeline ||
-    project.role ||
-    project.websiteUrl ||
-    project.githubUrl ||
-    project.demoUrl
+  const colors = statusColors(project.status)
+  const hasDescription = Boolean(project.description?.trim())
 
   return (
-    <Grid container spacing={3}>
+    <Grid container spacing={3} sx={{ alignItems: 'flex-start' }}>
       <Grid size={{ xs: 12, md: 8.5 }}>
         <Box
           sx={{
@@ -86,231 +88,210 @@ export default function ProjectCaseStudy({
             borderRadius: 2,
             bgcolor: 'background.paper',
             overflow: 'hidden',
+            p: { xs: 2, md: 2.5 },
           }}
         >
-          <Box
-            sx={{
-              px: 2,
-              py: 1.25,
-              borderBottom: 1,
-              borderColor: 'divider',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-            }}
-          >
-            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-              README
+          {project.thumbnailUrl && (
+            <Box
+              component="img"
+              src={project.thumbnailUrl}
+              alt=""
+              sx={{
+                width: '100%',
+                maxHeight: 280,
+                objectFit: 'cover',
+                objectPosition: 'top',
+                borderRadius: 1.5,
+                border: 1,
+                borderColor: 'divider',
+                mb: 2,
+              }}
+            />
+          )}
+
+          {!hideTitle && (
+            <Typography
+              variant="h5"
+              component="h1"
+              sx={{
+                fontWeight: 700,
+                letterSpacing: '-0.02em',
+                fontSize: '1.25rem',
+                mb: 1,
+              }}
+            >
+              {project.name}
             </Typography>
-          </Box>
+          )}
 
-          <Box sx={{ p: { xs: 2.5, md: 4 } }}>
-            {project.thumbnailUrl && (
-              <Box
-                component="img"
-                src={project.thumbnailUrl}
-                alt=""
-                sx={{
-                  width: '100%',
-                  maxHeight: 320,
-                  objectFit: 'cover',
-                  objectPosition: 'top',
-                  borderRadius: 1.5,
-                  border: 1,
-                  borderColor: 'divider',
-                  mb: 3,
-                }}
-              />
-            )}
+          {hubUsername && (
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: '0.8125rem' }}>
+              by @{hubUsername}
+            </Typography>
+          )}
 
-            {!hideTitle && (
-              <Typography
-                variant="h3"
-                component="h1"
-                sx={{
-                  fontWeight: 700,
-                  letterSpacing: '-0.02em',
-                  fontSize: { xs: '1.75rem', md: '2rem' },
-                  mb: 1.5,
-                }}
-              >
-                {project.name}
-              </Typography>
-            )}
+          {hasDescription && (
+            <>
+              <Heading first>Description</Heading>
+              <TextBlock value={project.description} />
+            </>
+          )}
 
-            {hubUsername && (
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                by @{hubUsername}
-              </Typography>
-            )}
-
-            {project.description && (
-              <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
-                {project.description}
-              </Typography>
-            )}
-
-            <Stack direction="row" useFlexGap sx={{ flexWrap: 'wrap', gap: 1, mb: 1 }}>
-              <Chip
-                label={project.status}
-                size="small"
-                sx={{ borderRadius: '4px', textTransform: 'lowercase' }}
-              />
-              {project.isPublished !== undefined && (
-                <Chip
-                  label={project.isPublished ? 'published' : 'draft'}
-                  size="small"
-                  color={project.isPublished ? 'success' : 'default'}
-                  variant="outlined"
-                  sx={{ borderRadius: '4px' }}
-                />
-              )}
-              {stack.length > 0 && (
-                <Chip
-                  label={`stack | ${stack.join(' | ')}`}
-                  size="small"
-                  variant="outlined"
-                  sx={{ borderRadius: '4px', height: 'auto', py: 0.5, '& .MuiChip-label': { whiteSpace: 'normal' } }}
-                />
-              )}
-            </Stack>
-
-            {project.problemStatement?.trim() && (
-              <>
-                <Heading>The problem</Heading>
-                <TextBlock value={project.problemStatement} />
-              </>
-            )}
-            {project.solution?.trim() && (
-              <>
-                <Heading>How it solves the problem</Heading>
-                <TextBlock value={project.solution} />
-              </>
-            )}
-            {project.targetUsers?.trim() && (
-              <>
-                <Heading>Users</Heading>
-                <TextBlock value={project.targetUsers} />
-              </>
-            )}
-            {project.useCases?.trim() && (
-              <>
-                <Heading>Use cases</Heading>
-                <TextBlock value={project.useCases} />
-              </>
-            )}
-            {project.keyFeatures?.trim() && (
-              <>
-                <Heading>Key features</Heading>
-                <TextBlock value={project.keyFeatures} />
-              </>
-            )}
-            {project.lessonsLearned?.trim() && (
-              <>
-                <Heading>Lessons learned</Heading>
-                <TextBlock value={project.lessonsLearned} />
-              </>
-            )}
-            {project.diagrams?.length > 0 && (
-              <>
-                <Heading>Diagrams</Heading>
-                <Stack spacing={2.5}>
-                  {project.diagrams.map((d) => (
-                    <Box key={d.id}>
-                      {d.title && (
-                        <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                          {d.title}
-                        </Typography>
-                      )}
-                      <Box
-                        component="img"
-                        src={d.imageUrl}
-                        alt={d.title || 'Diagram'}
-                        sx={{
-                          width: '100%',
-                          borderRadius: 1,
-                          border: 1,
-                          borderColor: 'divider',
-                        }}
-                      />
-                    </Box>
-                  ))}
-                </Stack>
-              </>
-            )}
-          </Box>
+          {project.problemStatement?.trim() && (
+            <>
+              <Heading first={!hasDescription}>The problem</Heading>
+              <TextBlock value={project.problemStatement} />
+            </>
+          )}
+          {project.solution?.trim() && (
+            <>
+              <Heading>How it solves the problem</Heading>
+              <TextBlock value={project.solution} />
+            </>
+          )}
+          {project.targetUsers?.trim() && (
+            <>
+              <Heading>Users</Heading>
+              <TextBlock value={project.targetUsers} />
+            </>
+          )}
+          {project.useCases?.trim() && (
+            <>
+              <Heading>Use cases</Heading>
+              <TextBlock value={project.useCases} />
+            </>
+          )}
+          {project.keyFeatures?.trim() && (
+            <>
+              <Heading>Key features</Heading>
+              <TextBlock value={project.keyFeatures} />
+            </>
+          )}
+          {project.lessonsLearned?.trim() && (
+            <>
+              <Heading>Lessons learned</Heading>
+              <TextBlock value={project.lessonsLearned} />
+            </>
+          )}
+          {project.diagrams?.length > 0 && (
+            <>
+              <Heading>Diagrams</Heading>
+              <Stack spacing={2}>
+                {project.diagrams.map((d) => (
+                  <Box key={d.id}>
+                    {d.title && (
+                      <Typography variant="body2" sx={{ mb: 0.75, fontWeight: 600, fontSize: '0.8125rem' }}>
+                        {d.title}
+                      </Typography>
+                    )}
+                    <Box
+                      component="img"
+                      src={d.imageUrl}
+                      alt={d.title || 'Diagram'}
+                      sx={{
+                        width: '100%',
+                        borderRadius: 1,
+                        border: 1,
+                        borderColor: 'divider',
+                      }}
+                    />
+                  </Box>
+                ))}
+              </Stack>
+            </>
+          )}
         </Box>
       </Grid>
 
       <Grid size={{ xs: 12, md: 3.5 }}>
-        {hasAbout && (
-          <Box
-            sx={{
-              border: 1,
-              borderColor: 'divider',
-              borderRadius: 2,
-              bgcolor: 'background.paper',
-              p: 2.5,
-              position: { md: 'sticky' },
-              top: { md: 72 },
-            }}
-          >
-            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-              About
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
+        <Box
+          sx={{
+            border: 1,
+            borderColor: 'divider',
+            borderRadius: 2,
+            bgcolor: 'background.paper',
+            p: 2,
+            position: { md: 'sticky' },
+            top: { md: 108 },
+          }}
+        >
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, fontSize: '0.875rem' }}>
+            About
+          </Typography>
+          <Divider sx={{ mb: 1.5 }} />
 
-            <SidebarItem label="Tech stack">
-              {stack.length > 0 ? (
-                <Stack direction="row" useFlexGap sx={{ flexWrap: 'wrap', gap: 0.75 }}>
-                  {stack.map((t) => (
-                    <Chip key={t} label={t} size="small" variant="outlined" sx={{ borderRadius: '4px' }} />
-                  ))}
-                </Stack>
-              ) : null}
-            </SidebarItem>
+          <SidebarItem label="Status">
+            <Chip
+              label={statusLabel(project.status)}
+              size="small"
+              sx={{
+                borderRadius: '999px',
+                bgcolor: colors.bg,
+                color: colors.color,
+                border: `1px solid ${colors.border}`,
+                fontWeight: 600,
+              }}
+            />
+          </SidebarItem>
 
-            <SidebarItem label="Deployed at">
-              {project.deployLocation || project.deployPlatform ? (
-                <Typography variant="body2">
-                  {project.deployLocation || project.deployPlatform}
-                </Typography>
-              ) : null}
-            </SidebarItem>
+          <SidebarItem label="Tech stack">
+            {stack.length > 0 ? (
+              <Stack direction="row" useFlexGap sx={{ flexWrap: 'wrap', gap: 0.75 }}>
+                {stack.map((t) => (
+                  <Chip key={t} label={t} size="small" variant="outlined" sx={{ borderRadius: '4px' }} />
+                ))}
+              </Stack>
+            ) : null}
+          </SidebarItem>
 
-            <SidebarItem label="Timeline">
-              {project.timeline ? <Typography variant="body2">{project.timeline}</Typography> : null}
-            </SidebarItem>
+          <SidebarItem label="Deployed at">
+            {project.deployLocation || project.deployPlatform ? (
+              <Typography variant="body2" sx={{ fontSize: '0.8125rem' }}>
+                {[project.deployPlatform, project.deployLocation].filter(Boolean).join(' · ')}
+              </Typography>
+            ) : null}
+          </SidebarItem>
 
-            <SidebarItem label="Role">
-              {project.role ? <Typography variant="body2">{project.role}</Typography> : null}
-            </SidebarItem>
+          <SidebarItem label="Timeline">
+            {project.timeline ? (
+              <Typography variant="body2" sx={{ fontSize: '0.8125rem' }}>
+                {project.timeline}
+              </Typography>
+            ) : null}
+          </SidebarItem>
 
-            <SidebarItem label="Website">
-              {project.websiteUrl ? (
-                <Link href={project.websiteUrl} target="_blank" rel="noopener noreferrer" variant="body2">
-                  {project.websiteUrl}
-                </Link>
-              ) : null}
-            </SidebarItem>
+          <SidebarItem label="Role">
+            {project.role ? (
+              <Typography variant="body2" sx={{ fontSize: '0.8125rem' }}>
+                {project.role}
+              </Typography>
+            ) : null}
+          </SidebarItem>
 
-            <SidebarItem label="Repository">
-              {project.githubUrl ? (
-                <Link href={project.githubUrl} target="_blank" rel="noopener noreferrer" variant="body2">
-                  {project.githubUrl}
-                </Link>
-              ) : null}
-            </SidebarItem>
+          <SidebarItem label="Website">
+            {project.websiteUrl ? (
+              <Link href={project.websiteUrl} target="_blank" rel="noopener noreferrer" variant="body2" sx={{ fontSize: '0.8125rem' }}>
+                {project.websiteUrl}
+              </Link>
+            ) : null}
+          </SidebarItem>
 
-            <SidebarItem label="Demo">
-              {project.demoUrl ? (
-                <Link href={project.demoUrl} target="_blank" rel="noopener noreferrer" variant="body2">
-                  {project.demoUrl}
-                </Link>
-              ) : null}
-            </SidebarItem>
-          </Box>
-        )}
+          <SidebarItem label="Repository">
+            {project.githubUrl ? (
+              <Link href={project.githubUrl} target="_blank" rel="noopener noreferrer" variant="body2" sx={{ fontSize: '0.8125rem' }}>
+                {project.githubUrl}
+              </Link>
+            ) : null}
+          </SidebarItem>
+
+          <SidebarItem label="Demo">
+            {project.demoUrl ? (
+              <Link href={project.demoUrl} target="_blank" rel="noopener noreferrer" variant="body2" sx={{ fontSize: '0.8125rem' }}>
+                {project.demoUrl}
+              </Link>
+            ) : null}
+          </SidebarItem>
+        </Box>
       </Grid>
     </Grid>
   )

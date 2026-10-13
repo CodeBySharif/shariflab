@@ -178,6 +178,17 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
           sizeSmall: { minWidth: 40, minHeight: 40 },
         },
       },
+      MuiTooltip: {
+        defaultProps: {
+          arrow: true,
+          enterDelay: 200,
+          slotProps: {
+            popper: {
+              modifiers: [{ name: 'offset', options: { offset: [0, -6] } }],
+            },
+          },
+        },
+      },
       MuiTextField: {
         defaultProps: { size: 'small' },
       },

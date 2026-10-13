@@ -108,23 +108,6 @@ export default function ProjectsPage() {
 
   return (
     <Box>
-      <Stack
-        direction="row"
-        spacing={2}
-        sx={{ mb: 2, alignItems: 'baseline', justifyContent: 'space-between' }}
-      >
-        <Typography variant="h4" sx={{ letterSpacing: '-0.02em', fontWeight: 600 }}>
-          Projects
-        </Typography>
-        {!showSkeleton && !isError && (
-          <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0 }}>
-            {filtered.length === 0
-              ? 'No projects'
-              : `${filtered.length} project${filtered.length === 1 ? '' : 's'}`}
-          </Typography>
-        )}
-      </Stack>
-
       {!showSkeleton && !isError && projects.length > 0 && (
         <Stack
           direction="row"

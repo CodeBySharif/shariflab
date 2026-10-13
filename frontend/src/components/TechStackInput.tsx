@@ -1,5 +1,5 @@
 import { useState, type KeyboardEvent } from 'react'
-import { Box, Chip, FormControl, FormHelperText, InputLabel, TextField } from '@mui/material'
+import { Box, Chip, FormControl, FormHelperText, InputLabel, OutlinedInput } from '@mui/material'
 import { parseTechStack } from '../lib/techStack'
 
 export default function TechStackInput({
@@ -12,6 +12,7 @@ export default function TechStackInput({
   helperText?: string
 }) {
   const [draft, setDraft] = useState('')
+  const [focused, setFocused] = useState(false)
   const items = parseTechStack(value)
 
   const commit = () => {
@@ -33,47 +34,59 @@ export default function TechStackInput({
   }
 
   return (
-    <FormControl fullWidth>
-      <InputLabel shrink sx={{ position: 'relative', transform: 'none', mb: 0.75 }}>
+    <FormControl fullWidth size="small" variant="outlined">
+      <InputLabel shrink htmlFor="tech-stack-input">
         Tech stack
       </InputLabel>
-      <Box
+      <OutlinedInput
+        id="tech-stack-input"
+        label="Tech stack"
+        notched
+        value={draft}
+        onChange={(event) => setDraft(event.target.value)}
+        onKeyDown={onKeyDown}
+        onFocus={() => setFocused(true)}
+        onBlur={() => {
+          setFocused(false)
+          commit()
+        }}
+        placeholder={items.length ? 'Add another…' : focused ? 'Add tech, then press Enter' : ''}
+        startAdornment={
+          items.length > 0 ? (
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 0.75,
+                mr: 0.75,
+                maxWidth: '100%',
+              }}
+            >
+              {items.map((tech) => (
+                <Chip
+                  key={tech}
+                  label={tech}
+                  size="small"
+                  onDelete={() => onChange(items.filter((item) => item !== tech).join(', '))}
+                  sx={{ borderRadius: '4px' }}
+                />
+              ))}
+            </Box>
+          ) : undefined
+        }
         sx={{
-          minHeight: 48,
-          display: 'flex',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: 0.75,
-          px: 1.5,
-          py: 1,
-          border: 1,
-          borderColor: 'divider',
-          borderRadius: 1,
-          bgcolor: 'background.paper',
-          '&:focus-within': { borderColor: 'primary.main', borderWidth: 2, px: '11px', py: '7px' },
+          py: 0.5,
+          minHeight: 44,
+          '& .MuiOutlinedInput-input': {
+            py: 0.75,
+            minWidth: 120,
+            flex: 1,
+          },
         }}
-      >
-        {items.map((tech) => (
-          <Chip
-            key={tech}
-            label={tech}
-            size="small"
-            onDelete={() => onChange(items.filter((item) => item !== tech).join(', '))}
-            sx={{ borderRadius: '4px' }}
-          />
-        ))}
-        <TextField
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={onKeyDown}
-          onBlur={commit}
-          placeholder={items.length ? 'Add another…' : 'Add tech, then press Enter'}
-          variant="standard"
-          slotProps={{ input: { disableUnderline: true } }}
-          sx={{ flex: 1, minWidth: 150, '& input': { py: 0, fontSize: '0.875rem' } }}
-        />
-      </Box>
-      {helperText && <FormHelperText sx={{ mx: 0 }}>{helperText}</FormHelperText>}
+      />
+      {helperText && <FormHelperText>{helperText}</FormHelperText>}
     </FormControl>
   )
 }

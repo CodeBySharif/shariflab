@@ -15,6 +15,7 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import GitHubIcon from '@mui/icons-material/GitHub'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
+import { deployLabel, statusColors, statusLabel } from '../lib/projectStatus'
 import { parseTechStack } from '../lib/techStack'
 import type { Project } from '../types'
 
@@ -36,6 +37,16 @@ function Placeholder({ name }: { name: string }) {
   )
 }
 
+const tipProps = {
+  arrow: true as const,
+  enterDelay: 200,
+  slotProps: {
+    popper: {
+      modifiers: [{ name: 'offset', options: { offset: [0, -6] } }],
+    },
+  },
+}
+
 export default function ProjectCard({
   project,
   onDelete,
@@ -49,6 +60,8 @@ export default function ProjectCard({
 }) {
   const stack = parseTechStack(project.techStack)
   const detailsPath = detailTo ?? `/projects/${project.id}`
+  const colors = statusColors(project.status)
+  const deploy = deployLabel(project.deployPlatform, project.deployLocation)
 
   return (
     <Card
@@ -57,77 +70,106 @@ export default function ProjectCard({
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        bgcolor: 'transparent',
-        border: 'none',
-        boxShadow: 'none',
-        backgroundImage: 'none',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 3,
+        bgcolor: 'background.paper',
       }}
     >
-      <Box
-        component={RouterLink}
-        to={detailsPath}
-        sx={{
-          display: 'block',
-          textDecoration: 'none',
-          color: 'inherit',
-          borderRadius: 3,
-          overflow: 'hidden',
-          border: 1,
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
-          '&:hover': { opacity: 0.92 },
-        }}
-      >
-        {project.thumbnailUrl ? (
-          <CardMedia
-            component="img"
-            image={project.thumbnailUrl}
-            alt=""
+      <Box sx={{ position: 'relative' }}>
+        <Box
+          component={RouterLink}
+          to={detailsPath}
+          sx={{
+            display: 'block',
+            textDecoration: 'none',
+            color: 'inherit',
+            overflow: 'hidden',
+            '&:hover': { opacity: 0.94 },
+          }}
+        >
+          {project.thumbnailUrl ? (
+            <CardMedia
+              component="img"
+              image={project.thumbnailUrl}
+              alt=""
+              sx={{
+                width: '100%',
+                aspectRatio: '16 / 9',
+                objectFit: 'cover',
+                objectPosition: 'top',
+                display: 'block',
+              }}
+            />
+          ) : (
+            <Placeholder name={project.name} />
+          )}
+        </Box>
+
+        {deploy && (
+          <Chip
+            label={deploy}
+            size="small"
             sx={{
-              width: '100%',
-              aspectRatio: '16 / 9',
-              objectFit: 'cover',
-              objectPosition: 'top',
-              display: 'block',
+              position: 'absolute',
+              top: 10,
+              left: 10,
+              height: 26,
+              borderRadius: '999px',
+              bgcolor: 'rgba(0,0,0,0.82)',
+              color: '#fff',
+              border: '1px solid rgba(255,255,255,0.35)',
+              fontWeight: 600,
+              fontSize: '0.75rem',
+              maxWidth: '48%',
+              '& .MuiChip-label': {
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                px: 1.25,
+              },
             }}
           />
-        ) : (
-          <Placeholder name={project.name} />
         )}
+
+        <Chip
+          label={statusLabel(project.status)}
+          size="small"
+          sx={{
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            height: 26,
+            borderRadius: '999px',
+            bgcolor: colors.bg,
+            color: colors.color,
+            border: `1px solid ${colors.border}`,
+            fontWeight: 600,
+            fontSize: '0.75rem',
+            '& .MuiChip-label': { px: 1.25 },
+          }}
+        />
       </Box>
 
-      <CardContent sx={{ px: 0.25, pt: 1.5, pb: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <Stack direction="row" spacing={1} sx={{ alignItems: 'flex-start', mb: 0.75 }}>
-          <Typography
-            component={RouterLink}
-            to={detailsPath}
-            variant="subtitle1"
-            sx={{
-              flex: 1,
-              minWidth: 0,
-              fontWeight: 600,
-              lineHeight: 1.35,
-              textDecoration: 'none',
-              color: 'text.primary',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-              '&:hover': { color: 'primary.main' },
-            }}
-          >
-            {project.name}
-          </Typography>
-          {!readOnly && (
-            <Chip
-              label={project.isPublished ? 'Published' : 'Draft'}
-              size="small"
-              color={project.isPublished ? 'success' : 'default'}
-              variant="outlined"
-              sx={{ borderRadius: '4px', height: 22, flexShrink: 0 }}
-            />
-          )}
-        </Stack>
+      <CardContent sx={{ px: 2, pt: 1.75, pb: 1.5, flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <Typography
+          component={RouterLink}
+          to={detailsPath}
+          variant="subtitle1"
+          sx={{
+            mb: 1,
+            fontWeight: 600,
+            lineHeight: 1.35,
+            textDecoration: 'none',
+            color: 'text.primary',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            '&:hover': { color: 'primary.main' },
+          }}
+        >
+          {project.name}
+        </Typography>
 
         {stack.length > 0 && (
           <Stack direction="row" useFlexGap sx={{ flexWrap: 'wrap', gap: 0.75, mb: 1 }}>
@@ -153,7 +195,7 @@ export default function ProjectCard({
           }}
         >
           <Stack direction="row" spacing={0.25}>
-            <Tooltip title="Visit site">
+            <Tooltip title="Visit site" {...tipProps}>
               <span>
                 <IconButton
                   component="a"
@@ -169,7 +211,7 @@ export default function ProjectCard({
                 </IconButton>
               </span>
             </Tooltip>
-            <Tooltip title="GitHub">
+            <Tooltip title="GitHub" {...tipProps}>
               <span>
                 <IconButton
                   component="a"
@@ -188,7 +230,7 @@ export default function ProjectCard({
           </Stack>
 
           <Stack direction="row" spacing={0.25}>
-            <Tooltip title="Details">
+            <Tooltip title="Details" {...tipProps}>
               <IconButton
                 component={RouterLink}
                 to={detailsPath}
@@ -201,7 +243,7 @@ export default function ProjectCard({
             </Tooltip>
             {!readOnly && (
               <>
-                <Tooltip title="Edit">
+                <Tooltip title="Edit" {...tipProps}>
                   <IconButton
                     component={RouterLink}
                     to={`/projects/${project.id}/edit`}
@@ -213,7 +255,7 @@ export default function ProjectCard({
                   </IconButton>
                 </Tooltip>
                 {onDelete && (
-                  <Tooltip title="Delete">
+                  <Tooltip title="Delete" {...tipProps}>
                     <IconButton
                       size="small"
                       color="error"
