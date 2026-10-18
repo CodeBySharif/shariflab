@@ -233,7 +233,7 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
           root: {
             backgroundImage: 'none',
             backgroundColor: tokens.primary,
-            color: '#000000',
+            color: '#ffffff',
             borderBottom: '1px solid rgba(0,0,0,0.12)',
             boxShadow: 'none',
           },

@@ -78,7 +78,7 @@ export default function Layout() {
           bgcolor: 'primary.main',
           backgroundImage: 'none',
           borderBottom: '1px solid rgba(0,0,0,0.12)',
-          color: '#000',
+          color: '#fff',
         }}
       >
         <Container>
@@ -91,12 +91,12 @@ export default function Layout() {
                 alignItems: 'center',
                 gap: 1.25,
                 textDecoration: 'none',
-                color: '#000',
+                color: '#fff',
                 mr: 'auto',
                 minHeight: 44,
               }}
             >
-              <FolderOutlinedIcon sx={{ fontSize: 26, color: '#000' }} />
+              <FolderOutlinedIcon sx={{ fontSize: 26, color: '#fff' }} />
               <Typography
                 component="span"
                 sx={{
@@ -104,7 +104,7 @@ export default function Layout() {
                   fontSize: '0.9375rem',
                   lineHeight: 1.2,
                   letterSpacing: '-0.01em',
-                  color: '#000',
+                  color: '#fff',
                 }}
               >
                 Project hub
@@ -118,7 +118,7 @@ export default function Layout() {
                     size="small"
                     onClick={copyShareLink}
                     aria-label="Copy public hub link"
-                    sx={{ width: 40, height: 40, color: '#000' }}
+                    sx={{ width: 40, height: 40, color: '#fff' }}
                   >
                     <ShareOutlinedIcon sx={{ fontSize: 20 }} />
                   </IconButton>
@@ -129,7 +129,7 @@ export default function Layout() {
                     to={`/u/${user.username}`}
                     size="small"
                     aria-label="View public hub"
-                    sx={{ width: 40, height: 40, color: '#000' }}
+                    sx={{ width: 40, height: 40, color: '#fff' }}
                   >
                     <VisibilityOutlinedIcon sx={{ fontSize: 20 }} />
                   </IconButton>
@@ -142,7 +142,7 @@ export default function Layout() {
                 size="small"
                 onClick={toggleMode}
                 aria-label="Toggle color mode"
-                sx={{ width: 40, height: 40, color: '#000' }}
+                sx={{ width: 40, height: 40, color: '#fff' }}
               >
                 {mode === 'dark' ? (
                   <LightModeOutlinedIcon sx={{ fontSize: 20 }} />
@@ -160,12 +160,12 @@ export default function Layout() {
                 sx={{
                   width: 40,
                   height: 40,
-                  color: '#000',
-                  bgcolor: isHome && showAddForm ? 'transparent' : 'rgba(0,0,0,0.08)',
+                  color: '#fff',
+                  bgcolor: isHome && showAddForm ? 'transparent' : 'rgba(255,255,255,0.12)',
                   border: 1,
-                  borderColor: 'rgba(0,0,0,0.35)',
+                  borderColor: 'rgba(255,255,255,0.45)',
                   '&:hover': {
-                    bgcolor: 'rgba(0,0,0,0.14)',
+                    bgcolor: 'rgba(255,255,255,0.2)',
                   },
                 }}
               >
@@ -190,8 +190,9 @@ export default function Layout() {
                     height: 32,
                     fontSize: '0.75rem',
                     fontWeight: 600,
-                    bgcolor: '#000',
+                    bgcolor: 'rgba(255,255,255,0.2)',
                     color: '#fff',
+                    border: '1px solid rgba(255,255,255,0.45)',
                   }}
                 >
                   {initial}
