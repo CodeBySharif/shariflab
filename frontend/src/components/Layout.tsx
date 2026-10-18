@@ -70,7 +70,17 @@ export default function Layout() {
         bgcolor: 'background.default',
       }}
     >
-      <AppBar position="sticky" color="transparent" elevation={0} sx={{ flexShrink: 0 }}>
+      <AppBar
+        position="sticky"
+        elevation={0}
+        sx={{
+          flexShrink: 0,
+          bgcolor: 'primary.main',
+          backgroundImage: 'none',
+          borderBottom: '1px solid rgba(0,0,0,0.12)',
+          color: '#000',
+        }}
+      >
         <Container>
           <Toolbar disableGutters sx={{ gap: 0.5 }}>
             <Box
@@ -81,12 +91,12 @@ export default function Layout() {
                 alignItems: 'center',
                 gap: 1.25,
                 textDecoration: 'none',
-                color: 'text.primary',
+                color: '#000',
                 mr: 'auto',
                 minHeight: 44,
               }}
             >
-              <FolderOutlinedIcon sx={{ fontSize: 26, color: 'primary.main' }} />
+              <FolderOutlinedIcon sx={{ fontSize: 26, color: '#000' }} />
               <Typography
                 component="span"
                 sx={{
@@ -94,6 +104,7 @@ export default function Layout() {
                   fontSize: '0.9375rem',
                   lineHeight: 1.2,
                   letterSpacing: '-0.01em',
+                  color: '#000',
                 }}
               >
                 Project hub
@@ -107,7 +118,7 @@ export default function Layout() {
                     size="small"
                     onClick={copyShareLink}
                     aria-label="Copy public hub link"
-                    sx={{ width: 40, height: 40 }}
+                    sx={{ width: 40, height: 40, color: '#000' }}
                   >
                     <ShareOutlinedIcon sx={{ fontSize: 20 }} />
                   </IconButton>
@@ -118,7 +129,7 @@ export default function Layout() {
                     to={`/u/${user.username}`}
                     size="small"
                     aria-label="View public hub"
-                    sx={{ width: 40, height: 40 }}
+                    sx={{ width: 40, height: 40, color: '#000' }}
                   >
                     <VisibilityOutlinedIcon sx={{ fontSize: 20 }} />
                   </IconButton>
@@ -131,7 +142,7 @@ export default function Layout() {
                 size="small"
                 onClick={toggleMode}
                 aria-label="Toggle color mode"
-                sx={{ width: 40, height: 40 }}
+                sx={{ width: 40, height: 40, color: '#000' }}
               >
                 {mode === 'dark' ? (
                   <LightModeOutlinedIcon sx={{ fontSize: 20 }} />
@@ -144,18 +155,17 @@ export default function Layout() {
             <Tooltip title={isHome && showAddForm ? 'Cancel' : 'Add project'} arrow>
               <IconButton
                 size="small"
-                color="primary"
                 onClick={onAddClick}
                 aria-label={isHome && showAddForm ? 'Cancel' : 'Add project'}
                 sx={{
                   width: 40,
                   height: 40,
-                  bgcolor: isHome && showAddForm ? 'transparent' : 'primary.main',
-                  color: isHome && showAddForm ? 'text.primary' : 'primary.contrastText',
+                  color: '#000',
+                  bgcolor: isHome && showAddForm ? 'transparent' : 'rgba(0,0,0,0.08)',
                   border: 1,
-                  borderColor: isHome && showAddForm ? 'divider' : 'primary.main',
+                  borderColor: 'rgba(0,0,0,0.35)',
                   '&:hover': {
-                    bgcolor: isHome && showAddForm ? 'action.hover' : 'primary.dark',
+                    bgcolor: 'rgba(0,0,0,0.14)',
                   },
                 }}
               >
@@ -180,8 +190,8 @@ export default function Layout() {
                     height: 32,
                     fontSize: '0.75rem',
                     fontWeight: 600,
-                    bgcolor: 'primary.main',
-                    color: 'primary.contrastText',
+                    bgcolor: '#000',
+                    color: '#fff',
                   }}
                 >
                   {initial}

@@ -232,8 +232,9 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
         styleOverrides: {
           root: {
             backgroundImage: 'none',
-            backgroundColor: isDark ? tokens.canvas : '#ffffff',
-            borderBottom: `1px solid ${isDark ? tokens.hairline : '#e4e4e7'}`,
+            backgroundColor: tokens.primary,
+            color: '#000000',
+            borderBottom: '1px solid rgba(0,0,0,0.12)',
             boxShadow: 'none',
           },
         },
